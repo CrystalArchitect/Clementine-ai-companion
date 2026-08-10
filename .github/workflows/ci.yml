@@ -18,30 +18,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      # archive/ is deliberately excluded. Superseded trees should not be able
+      # to fail the build for the tree that ships.
       - name: Syntax-check Python sources
-        run: python -m compileall -q clementine crystalcore-app
+        run: python -m compileall -q clementine
 
   python-tests:
-    name: Offline test suite
+    name: Consent + audit checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # The suite is offline — it makes no network calls — but the package
-      # imports requests at module scope (companion, ollama, spacexai,
-      # status), so the dependencies must be present for the import to
-      # succeed at all.
+      # The checks are offline — they make no network calls — but the package
+      # imports requests at module scope (crystalcore/companion.py), so the
+      # dependencies must be present for the import to succeed at all.
       - name: Install dependencies
-        working-directory: crystalcore-app
+        working-directory: clementine
         run: python -m pip install -r requirements.txt
-      # GOVERNANCE.md promises every change "passes the offline test suite
-      # before merging". Until now CI only ran compileall, so the suite was
-      # never executed here — and it was failing.
-      - name: Run the offline test suite
-        working-directory: crystalcore-app
-        run: python -m unittest discover -s tests -v
+      # Until 2026-08-10 this job ran `unittest discover` inside
+      # crystalcore-app/ — the pre-consent-gate tree, now under archive/. The
+      # consent gate is the piece the project's honesty claim rests on, and
+      # nothing in CI exercised it. These are the checks for the tree that
+      # actually ships.
+      - name: Consent gate
+        working-directory: clementine
+        run: python verify_consent.py
+      - name: Audit log integrity
+        working-directory: clementine
+        run: python verify_audit.py
 
   web-checks:
     name: SvelteKit check + build

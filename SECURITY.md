@@ -14,7 +14,7 @@ until a fix has shipped.
 
 ## Safety measures in this repo
 
-- **Clementine is local-first** (`crystalcore-app/`): the companion runs on the
+- **Clementine is local-first** (`clementine/`): the companion runs on the
   user's own device via Ollama by default; memory and profiles stay on disk.
 - **Cloud is opt-in only**: the xAI provider requires an explicit `/optin` and can
   be revoked with `/optout`; opt-in state is recorded locally.
