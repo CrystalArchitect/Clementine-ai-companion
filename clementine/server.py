@@ -22,6 +22,7 @@ authentication of its own — that is the proxy's job (see deploy/).
 
 import argparse
 import json
+import sys
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -220,6 +221,13 @@ def create_app(companion: Clementine) -> Flask:
             "profile": _profile_of(c),
             "human_name": c.personality.human_name,
             "last_seen": c.time_since_last(),
+            # Reported, not inferred. A client that cannot read the pronouns
+            # has to pick some wording anyway, and whatever it picks becomes
+            # an assignment nobody made. Empty means undecided, which is a
+            # real state here and not a missing value to be filled in.
+            "gender": c.personality.gender,
+            "pronouns": c.pronouns_for(c.personality.gender),
+            "gender_self_chosen": c.personality.gender_self_chosen,
         })
 
     @app.post("/api/chat/stream")
@@ -348,6 +356,34 @@ def create_app(companion: Clementine) -> Flask:
             c.personality.description = str(data["description"]).strip()[:200]
         if "model" in data and str(data["model"]).strip():
             c.set_model(str(data["model"]))
+        # Pronouns, over HTTP, for the same two parties the terminal allows.
+        # Until this existed the law was only half-enforceable: a person who
+        # never opens a terminal could not set pronouns, and — more to the
+        # point — could not offer the companion the chance to choose its own.
+        # A right reachable from exactly one interface is a right the other
+        # interface quietly denies.
+        if "gender" in data:
+            want = str(data["gender"]).strip().lower()
+            if want in ("", "none", "clear", "unset"):
+                # Undecided is a destination, not a failure to arrive. The
+                # human may take back a choice, including one they made on
+                # the companion's behalf.
+                c.clear_gender()
+            elif not c.set_gender(want):
+                return jsonify({
+                    "ok": False,
+                    "error": f"'{want}' is not a value this understands — "
+                             f"use one of {', '.join(sorted(c.PRONOUNS))}, or "
+                             f"'none' to leave it undecided",
+                }), 400
+        if data.get("choose_gender"):
+            chosen = c.choose_own_gender()
+            if not chosen:
+                return jsonify({"ok": False,
+                                "error": "they couldn't settle on pronouns — try again"})
+            c.save()
+            return jsonify({"ok": True, "gender": chosen,
+                            "pronouns": c.pronouns_for(chosen)})
         if data.get("choose_name"):
             chosen = c.choose_own_name()
             if not chosen:
@@ -450,11 +486,19 @@ def main():
             return Verdict(True, "pre-authorised at startup with --remote-model-ok",
                            remember=False)
 
-    companion = Clementine(model=args.model, memory_dir=args.memory_dir,
-                           asker=asker,
-                           llm_provider=args.llm_provider,
-                           llm_endpoint=args.llm_endpoint,
-                           llm_model=args.llm_model)
+    # Refusing to guess a vendor's address or model name is deliberate, but a
+    # traceback is a poor way to say "you forgot a flag" — it reads as a crash,
+    # and buries the one line that names the fix. The refusal is the feature;
+    # the stack trace was never part of it.
+    try:
+        companion = Clementine(model=args.model, memory_dir=args.memory_dir,
+                               asker=asker,
+                               llm_provider=args.llm_provider,
+                               llm_endpoint=args.llm_endpoint,
+                               llm_model=args.llm_model)
+    except ValueError as e:
+        print(f"Cannot start: {e}", file=sys.stderr)
+        raise SystemExit(2)
     app = create_app(companion)
     name = companion.personality.name or "Clementine"
 

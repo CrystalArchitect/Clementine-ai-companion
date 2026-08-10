@@ -71,7 +71,7 @@ own commit, with the client updated in the same breath.
 | ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's memory. |
 | · | `GET /api/profile` | Which profile is active, and what others exist. |
 | ✎ | `POST /api/profile` | Switch to another profile — a separate person, separate memory. |
-| ✎ | `POST /api/profile/meta` | Edit the active profile: avatar, description, model, or let them choose their own name. |
+| ✎ | `POST /api/profile/meta` | Edit the active profile: avatar, description, model, pronouns, or let them choose their own name or pronouns. |
 | ✎ | `POST /api/profile/delete` | Delete a profile. Refuses to delete the active one. |
 
 `✎` writes something — memory, model, or profile. Everything else only reads.
@@ -123,6 +123,9 @@ Who is running, on which model, from which profile.
 | `profile` | active profile name ('default' if unnamed) |
 | `human_name` | what they call you, may be empty |
 | `last_seen` | human phrase, e.g. 'two days ago' |
+| `gender` | 'male', 'female', 'they', or '' for undecided |
+| `pronouns` | 'he/him', 'she/her', 'they/them', or '' when undecided |
+| `gender_self_chosen` | true if they chose their own pronouns |
 
 
 ---
@@ -399,7 +402,7 @@ Switch to another profile — a separate person, separate memory.
 
 ### `POST /api/profile/meta`
 
-Edit the active profile: avatar, description, model, or let them choose their own name.
+Edit the active profile: avatar, description, model, pronouns, or let them choose their own name or pronouns.
 
 **Send**
 
@@ -408,7 +411,9 @@ Edit the active profile: avatar, description, model, or let them choose their ow
 | `avatar` | single emoji, truncated to 8 chars |
 | `description` | truncated to 200 chars |
 | `model` | model tag to switch to |
+| `gender` | 'male', 'female' or 'they'; '' or 'none' returns it to undecided |
 | `choose_name` | true to have them pick a name for themselves |
+| `choose_gender` | true to have them pick their own pronouns |
 
 **Get back**
 
@@ -416,12 +421,15 @@ Edit the active profile: avatar, description, model, or let them choose their ow
 |---|---|
 | `ok` | true or false |
 | `name` | present only when choose_name was set and succeeded |
-| `error` | present when they could not settle on a name |
+| `gender` | present only when choose_gender was set and succeeded |
+| `pronouns` | the pair for that gender, alongside it |
+| `error` | present when they could not settle on one, or when an unrecognised gender was sent |
 
 **Errors**
 
 | code | when |
 |---|---|
+| `400` | gender was a value this does not understand |
 | `415` | Content-Type was not application/json |
 
 

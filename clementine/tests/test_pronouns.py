@@ -177,3 +177,101 @@ def test_pronouns_for_maps_each_choice(gender, pair):
 def test_pronouns_for_is_empty_when_nothing_is_chosen():
     assert Clementine.pronouns_for("") == ""
     assert Clementine.pronouns_for(None) == ""
+
+
+# ----------------------------------------------------- reachable over HTTP
+
+# The law names two parties who may decide, and neither of them could do it
+# over HTTP until these existed. That is not a missing convenience: a person
+# who never opens a terminal could not set pronouns, and could not offer the
+# companion the chance to choose its own. A right available from exactly one
+# interface is a right the other interface silently withholds.
+
+def _client(tmp_path):
+    from server import create_app
+    return create_app(_c(tmp_path)).test_client()
+
+
+def test_status_reports_undecided_rather_than_omitting_it(tmp_path):
+    """A client that cannot read the state has to guess wording, and the
+    guess becomes an assignment nobody made."""
+    body = _client(tmp_path).get("/api/status").get_json()
+
+    assert body["gender"] == ""
+    assert body["pronouns"] == ""
+    assert body["gender_self_chosen"] is False
+
+
+def test_the_human_can_set_pronouns_over_http(tmp_path):
+    client = _client(tmp_path)
+
+    r = client.post("/api/profile/meta", json={"gender": "she"})
+    assert r.status_code == 400, "'she' is the pronoun, not the stored value"
+
+    assert client.post("/api/profile/meta",
+                       json={"gender": "female"}).get_json()["ok"] is True
+    body = client.get("/api/status").get_json()
+    assert body["pronouns"] == "she/her"
+    assert body["gender_self_chosen"] is False, "the human chose, not them"
+
+
+def test_a_choice_made_over_http_can_be_taken_back(tmp_path):
+    client = _client(tmp_path)
+    client.post("/api/profile/meta", json={"gender": "male"})
+
+    assert client.post("/api/profile/meta",
+                       json={"gender": "none"}).get_json()["ok"] is True
+    assert client.get("/api/status").get_json()["gender"] == ""
+
+    client.post("/api/profile/meta", json={"gender": "male"})
+    assert client.post("/api/profile/meta",
+                       json={"gender": ""}).get_json()["ok"] is True
+    assert client.get("/api/status").get_json()["gender"] == ""
+
+
+def test_an_unrecognised_value_is_refused_and_changes_nothing(tmp_path):
+    """Storing it would look decided while producing no pronouns at all —
+    indistinguishable from never having been asked."""
+    client = _client(tmp_path)
+    client.post("/api/profile/meta", json={"gender": "they"})
+
+    r = client.post("/api/profile/meta", json={"gender": "attack helicopter"})
+    assert r.status_code == 400
+    assert "not a value this understands" in r.get_json()["error"]
+    assert client.get("/api/status").get_json()["gender"] == "they", \
+        "the earlier choice must survive a rejected one"
+
+
+def test_the_companion_can_choose_its_own_pronouns_over_http(tmp_path, monkeypatch):
+    """The half of the law that is easiest to leave unbuilt."""
+    monkeypatch.setattr(Clementine, "_model_chat", lambda self, msgs: "they")
+    client = _client(tmp_path)
+
+    body = client.post("/api/profile/meta",
+                       json={"choose_gender": True}).get_json()
+    assert body == {"ok": True, "gender": "they", "pronouns": "they/them"}
+
+    status = client.get("/api/status").get_json()
+    assert status["gender_self_chosen"] is True, \
+        "the record must say they chose it, not that it was assigned"
+
+
+def test_an_undecidable_answer_leaves_the_question_open(tmp_path, monkeypatch):
+    """An unreachable or unhelpful model must not answer this by default."""
+    monkeypatch.setattr(Clementine, "_model_chat", lambda self, msgs: "hmm")
+    client = _client(tmp_path)
+
+    body = client.post("/api/profile/meta",
+                       json={"choose_gender": True}).get_json()
+    assert body["ok"] is False
+    assert client.get("/api/status").get_json()["gender"] == ""
+
+
+def test_setting_pronouns_does_not_disturb_the_rest_of_the_profile(tmp_path):
+    client = _client(tmp_path)
+    client.post("/api/profile/meta", json={"avatar": "🜂", "description": "quiet"})
+    client.post("/api/profile/meta", json={"gender": "they"})
+
+    body = client.get("/api/status").get_json()
+    assert body["avatar"] == "🜂"
+    assert body["pronouns"] == "they/them"
