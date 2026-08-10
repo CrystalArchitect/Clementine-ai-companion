@@ -8,7 +8,7 @@ where it does not, a consent gate asks first and an append-only, hash-chained
 audit log records what happened either way.
 
 Clementine is the first persona who lives on it (and the default one
-shipped here). Your human may rename her; the framework doesn't mind.
+shipped here). Your human may rename them; the framework doesn't mind.
 """
 
 from .audit import AuditLog
