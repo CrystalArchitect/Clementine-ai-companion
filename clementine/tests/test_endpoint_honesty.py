@@ -77,7 +77,7 @@ def test_a_remote_endpoint_is_refused_when_there_is_nobody_to_ask(tmp_path, monk
     monkeypatch.setattr("crystalcore.companion.requests.post", rec)
 
     with pytest.raises(ConsentRefused):
-        c._ollama_chat([{"role": "user", "content": "hello"}])
+        c._model_chat([{"role": "user", "content": "hello"}])
 
     assert rec.calls == 0, "refused at the gate, so nothing may be sent"
 
@@ -89,7 +89,7 @@ def test_a_refused_remote_call_is_logged_against_the_real_destination(tmp_path, 
     monkeypatch.setattr("crystalcore.companion.requests.post", _Recorder())
 
     with pytest.raises(ConsentRefused):
-        c._ollama_chat([{"role": "user", "content": "hello"}])
+        c._model_chat([{"role": "user", "content": "hello"}])
 
     entry = c.audit.entries()[-1]
     assert entry["destination"] == "api.example-vendor.test"
@@ -104,7 +104,7 @@ def test_an_approved_remote_call_goes_to_the_address_the_gate_judged(tmp_path, m
     rec = _Recorder()
     monkeypatch.setattr("crystalcore.companion.requests.post", rec)
 
-    c._ollama_chat([{"role": "user", "content": "hello"}])
+    c._model_chat([{"role": "user", "content": "hello"}])
 
     assert rec.url == REMOTE, "the request must go where the gate was told"
     entry = c.audit.entries()[-1]
@@ -142,6 +142,6 @@ def test_the_streaming_path_is_gated_too(tmp_path, monkeypatch):
     monkeypatch.setattr("crystalcore.companion.requests.post", rec)
 
     with pytest.raises(ConsentRefused):
-        list(c._ollama_stream([{"role": "user", "content": "hello"}]))
+        list(c._model_stream([{"role": "user", "content": "hello"}]))
 
     assert rec.calls == 0, "refused at the gate, so nothing may be sent"
