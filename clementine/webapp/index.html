@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
     <title>Clementine — sovereign companion</title>
-    <meta name="description" content="A sovereign companion. She runs on hardware you own." />
+    <meta name="description" content="A sovereign companion. It runs on hardware you own." />
 
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#000004" />
@@ -23,7 +23,7 @@
     <script type="module" src="/src/main.js"></script>
     <script>
       // Registered late and failure-tolerant. No service worker just means a
-      // plain web page, which still works; it must never delay her opening.
+      // plain web page, which still works; it must never delay the opening.
       if ('serviceWorker' in navigator) {
         addEventListener('load', () =>
           navigator.serviceWorker.register('/sw.js').catch(() => {}));
