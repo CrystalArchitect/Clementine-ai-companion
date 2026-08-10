@@ -2,15 +2,15 @@
 Clementine — terminal interface for the CrystalCore sovereign companion.
 
 The framework lives in the crystalcore/ package (memory, profiles, brain).
-This file is her doorway from the command line:
+This file is their doorway from the command line:
 
     python clementine.py                    # default memory
     python clementine.py --profile Crystal  # a named profile
     python clementine.py --model llama3.2:3b
 
-Her model is wherever OLLAMA_HOST points — by default this machine, in which
-case nothing you say leaves it. Point it elsewhere and she asks before every
-call, and records the answer either way.
+The model is wherever OLLAMA_HOST points — by default this machine, in which
+case nothing you say leaves it. Point it elsewhere and they ask before every
+call, and record the answer either way.
 """
 
 import argparse
@@ -22,20 +22,20 @@ from crystalcore import (BASE_PROMPT, Clementine, Memory, Personality,  # noqa: 
                          profile_meta, terminal_asker)
 
 HELP = """Commands:
-  /name <name>      give her a name (or change it)
-  /name             with no name: invite her to choose her own
-  /iam <name>       tell her your name
-  /remember <text>  ask her to permanently remember something (add #tags if you like)
-  /fact <key> <value>  teach her a structured fact, e.g. /fact birthday June 3
+  /name <name>      give them a name (or change it)
+  /name             with no name: invite them to choose their own
+  /iam <name>       tell them your name
+  /remember <text>  ask them to permanently remember something (add #tags if you like)
+  /fact <key> <value>  teach them a structured fact, e.g. /fact birthday June 3
                     (teach the same key again to correct it)
-  /notes [#tag]     show what she remembers (optionally only one #tag)
+  /notes [#tag]     show what they remember (optionally only one #tag)
   /forget <handle>  forget a fact by key or a note by number, e.g. /forget n2
-  /editnote <n> <text>  rewrite a note, e.g. /editnote n1 she prefers dawn walks
-  /summary [topic]  ask her to summarize what she remembers (optionally on a topic)
-  /reflect          invite her to reflect and form gentle insights about you
-                    (she also reflects on her own after long conversations;
+  /editnote <n> <text>  rewrite a note, e.g. /editnote n1 prefers dawn walks
+  /summary [topic]  ask them to summarize what they remember (optionally on a topic)
+  /reflect          invite them to reflect and form gentle insights about you
+                    (they also reflect on their own after long conversations;
                      insights appear in /notes as r1, r2... — /forget rN removes one)
-  /style <text>     tune her voice, e.g. /style more poetic, fewer questions
+  /style <text>     tune their voice, e.g. /style more poetic, fewer questions
   /temp <0.0-1.5>   set temperature (playfulness)
   /model <tag>      switch the local model, e.g. /model llama3.2:3b
   /exit             say goodbye (everything is saved automatically)
@@ -52,7 +52,7 @@ def main():
              "llama3.2:3b (lighter machines).")
     parser.add_argument(
         "--memory-dir", default="clementine_memory",
-        help="Where her memory is stored on this device.")
+        help="Where their memory is stored on this device.")
     parser.add_argument(
         "--profile", default="",
         help="Named profile (separate person, separate memory), e.g. "
@@ -83,7 +83,7 @@ def main():
     print("Starting Clementine (local mode)...")
     print("Make sure Ollama is running with a model loaded.\n")
 
-    # In the terminal a human is present, so she can ask before sending
+    # In the terminal a human is present, so they can ask before sending
     # anything to a model that is not on this machine.
     companion = Clementine(model=args.model, memory_dir=args.memory_dir,
                            asker=terminal_asker,
@@ -99,8 +99,8 @@ def main():
         greeting += f" — you last spoke {gap}"
     print(f"{greeting}. Type /help for commands, /exit to quit.")
     if not companion.personality.name and not returning:
-        print("She has no name yet — /name <name> to give her one, "
-              "or just /name to let her choose her own.")
+        print("No name chosen yet — /name <name> to give them one, "
+              "or just /name to let them choose their own.")
     print()
 
     while True:
@@ -117,22 +117,22 @@ def main():
         elif user_input.lower() == "/help":
             print(HELP)
         elif user_input.lower().rstrip() == "/name":
-            print("[She is choosing her own name…]")
+            print("[Choosing a name…]")
             chosen = companion.choose_own_name()
             if chosen:
                 name = chosen
-                print(f"[She has chosen her own name: {name}.]\n")
+                print(f"[They have chosen their own name: {name}.]\n")
             else:
-                print("[She couldn't settle on one — try /name again, "
-                      "or give her one with /name <name>.]\n")
+                print("[They couldn't settle on one — try /name again, "
+                      "or give them one with /name <name>.]\n")
         elif user_input.lower().startswith("/name "):
             companion.set_name(user_input[6:])
             name = companion.personality.name
-            print(f"[She is now called {name}.]\n")
+            print(f"[They are now called {name}.]\n")
         elif user_input.lower().startswith("/iam "):
             companion.personality.human_name = user_input[5:].strip()
             companion.save()
-            print(f"[She knows you as {companion.personality.human_name}.]\n")
+            print(f"[They know you as {companion.personality.human_name}.]\n")
         elif user_input.lower().startswith("/remember "):
             companion.remember(user_input[10:])
             print("[Remembered, permanently.]\n")
@@ -160,7 +160,7 @@ def main():
                 print(f"  n{i} - {note['text']}"
                       f"{'  [' + tags + ']' if tags else ''}  ({note['when']})")
             if companion.memory.reflections and not want:
-                print("  her own reflections (hold lightly; /forget rN removes one):")
+                print("  their own reflections (hold lightly; /forget rN removes one):")
                 for i, r in enumerate(companion.memory.reflections, 1):
                     print(f"  r{i} - {r['text']}  ({r['when']})")
             print()

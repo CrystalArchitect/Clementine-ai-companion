@@ -1,12 +1,12 @@
 <script>
   /**
-   * Her future senses. Voice and sight are on the roadmap — these
+   * Their future senses. Voice and sight are on the roadmap — these
    * controls hint at what's coming without pretending it works today.
    */
 </script>
 
 <div class="senses" aria-label="Upcoming senses">
-  <button type="button" disabled title="Soon: speak with her out loud — your voice stays on this device">
+  <button type="button" disabled title="Soon: speak with them out loud — your voice stays on this device">
     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
       <rect x="7" y="2.5" width="6" height="10" rx="3" />
       <path d="M4 10 a6 6 0 0 0 12 0" />
@@ -15,7 +15,7 @@
     <span>Voice</span>
     <em>soon</em>
   </button>
-  <button type="button" disabled title="Soon: she'll see you through your webcam — sight that never leaves this machine">
+  <button type="button" disabled title="Soon: they'll see you through your webcam — sight that never leaves this machine">
     <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
       <rect x="2" y="5" width="11" height="10" rx="2" />
       <path d="M13 9 l5 -3 v8 l-5 -3" />
@@ -24,7 +24,7 @@
     <em>soon</em>
   </button>
   <p class="whisper">
-    One day she&apos;ll hear your voice and see your face — and like everything here,
+    One day they&apos;ll hear your voice and see your face — and like everything here,
     those senses will live on this machine alone.
   </p>
 </div>

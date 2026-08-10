@@ -1,5 +1,5 @@
 """
-Clementine — her face and her brain, on one address.
+Clementine — their face and their brain, on one address.
 
 Serves the built Svelte interface from webapp/dist alongside the JSON API,
 so there is a single origin: no CORS, and a phone needs no configuration
@@ -15,7 +15,7 @@ During development, run vite instead and it will proxy to this API:
     python server.py                  # brain
     cd webapp && npm run dev           # face, on its own port
 
-Binds 127.0.0.1 by default. --host exists for putting her behind a reverse
+Binds 127.0.0.1 by default. --host exists for putting them behind a reverse
 proxy you control, and warns when used, because this server has no
 authentication of its own — that is the proxy's job (see deploy/).
 """
@@ -45,8 +45,8 @@ def create_app(companion: Clementine) -> Flask:
 
     @app.after_request
     def allow_local_webapp(resp):
-        # Only for development, when vite serves her face on another localhost
-        # port. In a real deployment she is served from this same origin and no
+        # Only for development, when vite serves the face on another localhost
+        # port. In a real deployment it is served from this same origin and no
         # CORS header is emitted at all. Localhost origins only, always.
         origin = request.headers.get("Origin", "")
         if origin.startswith("http://127.0.0.1:") or origin.startswith("http://localhost:"):
@@ -239,7 +239,7 @@ def create_app(companion: Clementine) -> Flask:
             chosen = c.choose_own_name()
             if not chosen:
                 return jsonify({"ok": False,
-                                "error": "she couldn't settle on a name — try again"})
+                                "error": "they couldn't settle on a name — try again"})
             c.save()
             return jsonify({"ok": True, "name": chosen})
         c.save()
@@ -267,7 +267,7 @@ def create_app(companion: Clementine) -> Flask:
         return jsonify({"ok": True, "profile": _profile_of(c),
                         "name": c.personality.name or "Clementine"})
 
-    # ---------- her face, from the same address ----------
+    # ---------- the face, from the same address ----------
 
     @app.get("/")
     @app.get("/<path:asset>")
@@ -278,7 +278,7 @@ def create_app(companion: Clementine) -> Flask:
             return Response(
                 "Clementine's interface has not been built yet.\n\n"
                 "    cd webapp && npm install && npm run build\n\n"
-                "Her API is running and answering at /api/status — this "
+                "The API is running and answering at /api/status — this "
                 "address just has no face to show you.\n",
                 mimetype="text/plain", status=503)
         target = (WEBAPP_DIST / asset)
@@ -291,11 +291,11 @@ def create_app(companion: Clementine) -> Flask:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Clementine — her face and her brain on one address.")
+        description="Clementine — their face and their brain on one address.")
     parser.add_argument("--model", default="llama3.1:8b",
                         help="Ollama model tag (same choices as the CLI).")
     parser.add_argument("--memory-dir", default="clementine_memory",
-                        help="Her memory folder (shared with the CLI).")
+                        help="Their memory folder (shared with the CLI).")
     parser.add_argument("--profile", default="",
                         help="Named profile (separate person, separate memory).")
     parser.add_argument("--port", type=int, default=5000)
@@ -352,7 +352,7 @@ def main():
         print()
         print(f"  WARNING: bound to {args.host}, not loopback. This server has")
         print("  no authentication of its own — anyone who can reach this port")
-        print("  can talk to her and read her memory. Put an authenticating")
+        print("  can talk to them and read their memory. Put an authenticating")
         print("  reverse proxy in front of it (see deploy/).")
     print()
     print("Ctrl+C to say goodnight.")
