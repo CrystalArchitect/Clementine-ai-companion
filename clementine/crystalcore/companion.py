@@ -127,13 +127,6 @@ class Clementine:
         self.llm_provider = (llm_provider or os.getenv("LLM_PROVIDER")
                              or self.personality.llm_provider
                              or self._detect_provider())
-        self.llm_model = (llm_model or os.getenv("LLM_MODEL")
-                          or self.personality.llm_model
-                          or self._default_model())
-        self.llm_api_key = (os.getenv("LLM_API_KEY")
-                            or os.getenv("MODEL_ACCESS_KEY")
-                            or os.getenv("XAI_API_KEY") or "")
-
         # Where this companion actually sends things, read by both the consent
         # gate and the request that follows it — so the address the gate judges
         # is the address that gets used. Set once, here, rather than at each
@@ -141,6 +134,12 @@ class Clementine:
         # another does not merely fail to protect, it writes "local" in the
         # audit log for a call that left the machine, which is worse than
         # having recorded nothing at all.
+        #
+        # Resolved before the model name, and the order is deliberate now that
+        # both can refuse. "Where does this conversation go" is the question
+        # the gate exists to answer; "under which model name" only matters
+        # once somewhere has been chosen. Configure a remote provider and
+        # supply neither, and the missing address is what you hear about.
         self.endpoint = (llm_endpoint or os.getenv("LLM_ENDPOINT")
                          or self.personality.llm_endpoint
                          or self._default_endpoint())
@@ -149,6 +148,13 @@ class Clementine:
         # most private material here; sending it to a vendor to save a local
         # dependency would be a poor trade, and nothing asks for it.
         self.embed_endpoint = EMBED_URL
+
+        self.llm_model = (llm_model or os.getenv("LLM_MODEL")
+                          or self.personality.llm_model
+                          or self._default_model())
+        self.llm_api_key = (os.getenv("LLM_API_KEY")
+                            or os.getenv("MODEL_ACCESS_KEY")
+                            or os.getenv("XAI_API_KEY") or "")
 
     @property
     def destination(self) -> str:
@@ -211,9 +217,26 @@ class Clementine:
         return OLLAMA_URL
 
     def _default_model(self) -> str:
-        """The model name for this provider, when one was not given."""
+        """The model name for this provider, when one was not given.
+
+        Refuses for remote providers, exactly as _default_endpoint() does
+        directly above. The two questions are the same question: this one
+        used to answer "llama3.1:8b" for every provider, so choosing OpenAI
+        and forgetting --llm-model sent a local model's tag to a vendor that
+        has never heard of it. The vendor rejects it, which looks like a
+        broken account rather than a missing flag, and the audit log records
+        a model nobody asked for — the exact failure `wire_model` exists to
+        prevent, arriving by a different door.
+
+        Refusing at startup names the missing flag instead.
+        """
         if self.llm_provider == "grok":
             return os.getenv("DO_INFERENCE_MODEL", "gpt-5-5")
+        if self._dialect() == "openai":
+            raise ValueError(
+                f"provider '{self.llm_provider}' needs an explicit model — "
+                "set --llm-model or LLM_MODEL (e.g. gpt-5-5). No model name "
+                "is guessed for a service this machine does not host.")
         return "llama3.1:8b"
 
     # ---------- identity & memory ----------
