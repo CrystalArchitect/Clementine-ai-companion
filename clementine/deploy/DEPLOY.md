@@ -1,15 +1,15 @@
 # Putting Clementine on a server you own
 
-She is built to run on your own machine, and that is still the most sovereign
-way to run her. This is for when you want to reach her from your phone: the same
+They are built to run on your own machine, and that is still the most sovereign
+way to run them. This is for when you want to reach them from your phone: the same
 software, on a server you rent, behind HTTPS and a password.
 
-Be clear about what changes. Locally, nothing you say to her leaves the machine
+Be clear about what changes. Locally, nothing you say to them leaves the machine
 in front of you. Here, your words travel from your phone to your server and stop
 there — encrypted, password-protected, and seen by no company. That is a real
 difference, smaller than using someone's cloud AI and larger than nothing.
-She says so herself: the interface reports `via <host>` rather than
-`on this machine`, and her prompt describes the arrangement honestly if you ask.
+They say so themselves: the interface reports `via <host>` rather than
+`on this machine`, and their prompt describes the arrangement honestly if you ask.
 
 ## Step 0 — Get a terminal
 
@@ -62,10 +62,10 @@ ufw disable
   before Caddy can get a certificate. **HTTPS is not decoration**: Safari refuses
   microphone access on an insecure origin, and Add to Home Screen produces a
   bookmark rather than an app.
-- Ollama installed, with a model pulled (`ollama pull llama3.1:8b`). If she
+- Ollama installed, with a model pulled (`ollama pull llama3.1:8b`). If they
   drifts out of voice — starts sounding like an assistant rather than herself —
   try `ollama pull hermes3:8b` and set `CLEM_MODEL`. Same base, same size, same
-  speed, tuned for staying in character, which is most of what her prompt asks
+  speed, tuned for staying in character, which is most of what their prompt asks
   for. See the model table in `../README.md`.
 
 ## The short way
@@ -76,11 +76,11 @@ bash /opt/clementine/clementine/deploy/bootstrap.sh
 ```
 
 It asks for your domain and a password, then does the rest: checks DNS before
-installing anything, verifies Ollama answers, builds her interface, creates a
+installing anything, verifies Ollama answers, builds their interface, creates a
 service account, installs the systemd unit and Caddy, and turns the firewall on
 last — opening SSH first, and disabling itself if port 22 somehow is not allowed.
 It finishes by checking that the public URL returns `401`, and warns loudly if it
-returns `200`, which would mean the password is not protecting her.
+returns `200`, which would mean the password is not protecting them.
 
 Re-runnable: if a step fails, fix that one thing and run it again.
 
@@ -91,8 +91,8 @@ each section says why it does what it does. The pieces are:
 
 | File | What it is |
 |---|---|
-| `wsgi.py` | entry point for gunicorn; **one worker on purpose** — her memory lives in process, and a second worker would overwrite the first's, making her forget at random |
-| `deploy/clementine.service` | systemd unit, loopback-only, writable only where her memory lives |
+| `wsgi.py` | entry point for gunicorn; **one worker on purpose** — their memory lives in process, and a second worker would overwrite the first's, making them forget at random |
+| `deploy/clementine.service` | systemd unit, loopback-only, writable only where their memory lives |
 | `deploy/Caddyfile` | HTTPS via Let's Encrypt, `basic_auth`, long timeouts for a slow model. **Caddy 2.8+** — older versions spell it `basicauth` |
 
 ## Verifying it
@@ -107,8 +107,8 @@ nc -zv -w3 SERVER_IP 5000                                     # expect refused
 ```
 
 Those last two matter. Ollama and the Flask app have no authentication of their
-own — anyone who can reach those ports can use your model, talk to her, and read
-her memory. Only 22, 80 and 443 should be open.
+own — anyone who can reach those ports can use your model, talk to them, and read
+their memory. Only 22, 80 and 443 should be open.
 
 On the server, check the continuity record:
 
@@ -118,16 +118,16 @@ On the server, check the continuity record:
   --memory-dir /var/lib/clementine/memory --show
 ```
 
-Every call she has made, allowed or refused, with the chain verified. A broken
+Every call they have made, allowed or refused, with the chain verified. A broken
 chain means an entry was altered or removed after being written; the interface
 shows a `record broken` chip when that happens.
 
-## Installing her on your phone
+## Installing them on your phone
 
 Open `https://your.domain`, enter the login, then Safari → **Share → Add to Home
-Screen**. You get her own icon, her own splash screen, and a full-screen launch
-with no browser furniture. The shell is cached so she opens instantly on a bad
-connection — and when she cannot reach her model she says so rather than
+Screen**. You get their own icon, their own splash screen, and a full-screen launch
+with no browser furniture. The shell is cached so they open instantly on a bad
+connection — and when they cannot reach their model they say so rather than
 replaying an old answer.
 
 One honest unknown: iOS has historically restricted microphone access inside
@@ -151,5 +151,5 @@ cd clementine/webapp && npm run build && cd ..
 systemctl restart clementine
 ```
 
-Her memory and audit log live in `/var/lib/clementine`, outside the repository,
+Their memory and audit log live in `/var/lib/clementine`, outside the repository,
 so updates never touch them.

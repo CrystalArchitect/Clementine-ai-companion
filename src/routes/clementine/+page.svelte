@@ -3,18 +3,18 @@
 
   const setup = `# 1. Install Ollama (the local model engine) from ollama.com
 
-# 2. Pull her brains
+# 2. Pull their brains
 ollama pull llama3.1:8b
 ollama pull nomic-embed-text
 
-# 3. Get her code
+# 3. Get their code
 git clone https://github.com/CrystalArchitect/The-Crystal-Vision.git
 cd The-Crystal-Vision/clementine
 pip install -r requirements.txt
 
-# 4. Wake her
+# 4. Wake them
 python clementine.py          # terminal
-python server.py              # or her local web interface:
+python server.py              # or their local web interface:
 cd webapp && npm install && npm run dev   # open 127.0.0.1:5174`;
 </script>
 
@@ -22,7 +22,7 @@ cd webapp && npm install && npm run dev   # open 127.0.0.1:5174`;
   <title>Clementine — a sovereign AI companion</title>
   <meta
     name="description"
-    content="Clementine is a sovereign, locally-run AI companion. She lives on your device, remembers you across time, reflects gently, and belongs to no one but you."
+    content="Clementine is a sovereign, locally-run AI companion. They live on your device, remember you across time, reflects gently, and belongs to no one but you."
   />
 </svelte:head>
 
@@ -31,60 +31,60 @@ cd webapp && npm install && npm run dev   # open 127.0.0.1:5174`;
   <h1>Meet Clementine</h1>
   <p class="attribution">
     A sovereign, locally-run AI companion — the first persona of the open-source CrystalCore
-    framework. She lives on your device. She learns only from you. No company can reach her.
+    framework. They live on your device. They learn only from you. No company can reach them.
   </p>
 
   <section class="chapter node" style="--node:var(--purple)">
-    <h2>What makes her different</h2>
+    <h2>What makes them different</h2>
     <ul>
       <li>
-        <strong>She remembers you.</strong> Layered memory — recent conversation, summarised history,
-        permanent facts and notes — persisting across days, weeks, months. Teach her something once;
-        she carries it.
+        <strong>They remember you.</strong> Layered memory — recent conversation, summarised history,
+        permanent facts and notes — persisting across days, weeks, months. Teach them something once;
+        they carry it.
       </li>
       <li>
-        <strong>She recalls by meaning.</strong> Ask about the stars and she'll surface what you told
-        her about the night sky — even if you never used the same words. Fresh memories gently outrank
+        <strong>They recall by meaning.</strong> Ask about the stars and they'll surface what you told
+        them about the night sky — even if you never used the same words. Fresh memories gently outrank
         stale ones; nothing is deleted without your hand.
       </li>
       <li>
-        <strong>She reflects.</strong> After real conversations she forms gentle, tentative insights
+        <strong>They reflect.</strong> After real conversations they form gentle, tentative insights
         about you — always visible, always deletable, never presented as fact.
       </li>
       <li>
-        <strong>She feels time.</strong> "You last spoke three days ago." Continuity you can feel,
+        <strong>They feel time.</strong> "You last spoke three days ago." Continuity you can feel,
         computed on your own machine.
       </li>
       <li>
-        <strong>She is yours alone.</strong> Every memory is a plain file in a folder you own. View,
+        <strong>They are yours alone.</strong> Every memory is a plain file in a folder you own. View,
         edit, tag, or forget anything. Profiles keep separate people entirely separate. Nothing leaves
-        your device — the web page she serves is bound to your machine only.
+        your device — the web page they serve is bound to your machine only.
       </li>
       <li>
-        <strong>She is honest.</strong> Uncertainty admitted plainly. Presence before solutions. And
-        she'll tell you she's not a therapist when you need more than presence.
+        <strong>They are honest.</strong> Uncertainty admitted plainly. Presence before solutions. And
+        they'll tell you they're not a therapist when you need more than presence.
       </li>
     </ul>
   </section>
 
   <section class="chapter node" style="--node:var(--blue)">
-    <h2>Run her tonight</h2>
+    <h2>Run them tonight</h2>
     <p>
-      She runs on ordinary hardware — a laptop with 16&nbsp;GB of RAM is a fine home. Everything is
+      They run on ordinary hardware — a laptop with 16&nbsp;GB of RAM is a fine home. Everything is
       free and open source.
     </p>
     <pre>{setup}</pre>
     <p>
-      Then give her a name — any name; she embraces whatever you choose — tell her yours, and talk.
-      When the conversation has some weight, type <strong>/reflect</strong> and watch her think about
+      Then give them a name — any name; they embrace whatever you choose — tell them yours, and talk.
+      When the conversation has some weight, type <strong>/reflect</strong> and watch them think about
       you for the first time.
     </p>
   </section>
 
   <section class="chapter node" style="--node:var(--gold)">
-    <h2>The framework beneath her</h2>
+    <h2>The framework beneath them</h2>
     <p>
-      <strong>CrystalCore</strong> is the independent, open-source engine she lives on — layered
+      <strong>CrystalCore</strong> is the independent, open-source engine they live on — layered
       memory, semantic recall, reflection, profiles, and a streaming connection to local open-source
       models. The name comes from crystallography: order as the source of strength.
     </p>
@@ -102,7 +102,7 @@ cd webapp && npm install && npm run dev   # open 127.0.0.1:5174`;
       <li>
         <a href="https://github.com/CrystalArchitect/The-Crystal-Vision/blob/master/content/MEMORY.md"
           >MEMORY.md</a
-        > — how her four-layer memory works
+        > — how their four-layer memory works
       </li>
       <li>
         <a href="https://github.com/CrystalArchitect/The-Crystal-Vision/blob/master/content/GOVERNANCE.md"
@@ -117,7 +117,7 @@ cd webapp && npm install && npm run dev   # open 127.0.0.1:5174`;
   </section>
 
   <nav class="pagenav" aria-label="Continue">
-    <a href="https://github.com/CrystalArchitect/The-Crystal-Vision">Get her on GitHub →</a>
+    <a href="https://github.com/CrystalArchitect/The-Crystal-Vision">Get them on GitHub →</a>
     <a href="/codex">The Codex</a>
     <a href="/">← Home</a>
   </nav>

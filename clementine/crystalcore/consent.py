@@ -2,11 +2,11 @@
 CrystalCore consent: nothing leaves without agreement.
 
 The hard part of a consent gate in a *companion* is not strictness, it is
-tolerability. Asking permission for every sentence would make her unusable,
+tolerability. Asking permission for every sentence would make them unusable,
 and a gate people click through without reading protects nobody. So the rule
 here is drawn where it actually means something:
 
-  * Talking to a model on this machine is what she is for. It is recorded,
+  * Talking to a model on this machine is what they are for. It is recorded,
     not interrupted.
   * Talking to a model somewhere else is a different act. It needs a yes,
     and without one the answer is no.

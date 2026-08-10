@@ -1,7 +1,7 @@
 # Clementine — the sovereign companion
 
-She runs on hardware you own. By default that is the machine in front of you and
-nothing she hears leaves it; if you choose to run her on a server of your own, she
+They run on hardware you own. By default that is the machine in front of you and
+nothing they hear leaves it; if you choose to run them on a server of your own, they
 says so plainly rather than continuing to claim otherwise.
 
 ## Layout
@@ -10,18 +10,18 @@ says so plainly rather than continuing to claim otherwise.
 - `crystalcore/` — the framework: brain, layered memory, profiles
   - `consent.py` — the gate: nothing goes to a model elsewhere without a yes
   - `audit.py` — the record: every call, hash-chained so it cannot be edited quietly
-- `server.py` — the JSON API, and her face, on one address
+- `server.py` — the JSON API, and their face, on one address
 - `webapp/` — the Svelte interface
 - `verify_audit.py` — check the record has not been tampered with
-- `deploy/` — putting her on a server you own, behind HTTPS and a password
+- `deploy/` — putting them on a server you own, behind HTTPS and a password
 
-Her *manner* is also packaged as a portable skill at
+Their *manner* is also packaged as a portable skill at
 `.claude/skills/clementine/` in this repository, loadable by Claude Code,
-Hermes Agent, Cursor and similar runtimes. That version carries her voice and
-her skills but none of her memory, consent gate or audit log, and it says so
+Hermes Agent, Cursor and similar runtimes. That version carries their voice and
+their skills but none of their memory, consent gate or audit log, and it says so
 itself — worth understanding the difference before reaching for it.
 
-Her character was not made by one pair of hands. The maintainer wrote and
+Their character was not made by one pair of hands. The maintainer wrote and
 gathered it with help from several AI systems: ChatGPT and Grok helped draft
 the eight character passages folded in by PR #47 (Turning the Mind, Wonder,
 Shared Discovery, Intellectual Humility, Memory Philosophy, Repair, Silence,
@@ -31,13 +31,13 @@ The full accounting — including which parts of it are witnessed and which
 rest on the maintainer's word — lives in the portfolio archive's
 `knowledge-base/10-PROVENANCE.md`.
 
-## Running her
+## Running them
 
 Prerequisite: [Ollama](https://ollama.com) with a model pulled, e.g.
 `ollama pull llama3.1:8b`. Optionally `ollama pull nomic-embed-text`, which gives
-her semantic recall instead of keyword matching.
+their semantic recall instead of keyword matching.
 
-**Which model.** Her system prompt is long and asks for something specific —
+**Which model.** Their system prompt is long and asks for something specific —
 a consistent manner, restraint about offering solutions, skills deployed one at
 a time. Instruction-following and character consistency matter more here than
 raw benchmark scores.
@@ -45,7 +45,7 @@ raw benchmark scores.
 | Model | Why |
 |---|---|
 | `llama3.1:8b` | The default. Solid, widely available, known quantity. |
-| `hermes3:8b` | Nous Research's fine-tune of the same base, tuned for steerability and staying in character. Same size and speed, usually better at holding a long persona prompt. Worth trying if she drifts out of voice. |
+| `hermes3:8b` | Nous Research's fine-tune of the same base, tuned for steerability and staying in character. Same size and speed, usually better at holding a long persona prompt. Worth trying if they drift out of voice. |
 | `llama3.2:3b` | Noticeably faster on CPU, less depth. The right trade if 8B is painful on your hardware. |
 
 Set it with `--model`, per profile, or `CLEM_MODEL` in the service file.
@@ -61,7 +61,7 @@ python clementine.py
 
 ### Web interface
 
-One address for both her face and her brain:
+One address for both their face and their brain:
 
 ```bash
 cd webapp && npm install && npm run build && cd ..
@@ -80,12 +80,12 @@ Both interfaces share the same memory folder (`clementine_memory/` by default),
 so you can move between terminal and browser freely. `--profile <name>` on either
 keeps separate people separate.
 
-## Where she runs, and how you can tell
+## Where they run, and how you can tell
 
-Her model is wherever `OLLAMA_HOST` points — by default this machine. Anywhere
+Their model is wherever `OLLAMA_HOST` points — by default this machine. Anywhere
 else and every call needs your consent:
 
-- In the terminal she asks, and you answer yes, always-this-session, or no.
+- In the terminal they ask, and you answer yes, always-this-session, or no.
 - `server.py` cannot ask a human at a prompt, so consent is given once at
   startup with `--remote-model-ok`, and every call it permits records that as its
   reason instead of passing unremarked.
@@ -127,7 +127,7 @@ hardcoded assumption.
 
 ## The record
 
-Every model call — allowed or refused — is one line in `audit.jsonl` beside her
+Every model call — allowed or refused — is one line in `audit.jsonl` beside their
 memory, each carrying the SHA-256 of the line before it. Edit an entry or remove
 a line and the chain breaks detectably:
 
@@ -139,7 +139,7 @@ It stores sizes and destinations, never what was said. Refusals are recorded as
 carefully as approvals, because a log of only what succeeded would flatter the
 system rather than describe it.
 
-## Putting her on a server
+## Putting them on a server
 
 See [`deploy/DEPLOY.md`](deploy/DEPLOY.md) — one script does it, and the runbook
 starts from "how do I even get a terminal". HTTPS is required rather than

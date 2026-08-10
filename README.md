@@ -29,13 +29,13 @@ This is the beginning of **TerAustralis Incognita** — Australia's contribution
 **CrystalCore** is this project's independent, open-source framework for building sovereign, locally-run AI companions — and **Clementine** is the first companion living on it. The name is inspired by the ordered structures of crystallography — building AI companions with clarity, stability, and user-defined structure. It runs entirely on your own device using open-source models via Ollama. No cloud, no account, no surveillance.
 
 - **Sovereign & local-first** — everything runs and stays on your device
-- **Layered memory** — recent conversation, auto-summarized history, permanent facts & notes, and her own gentle reflections
+- **Layered memory** — recent conversation, auto-summarized history, permanent facts & notes, and their own gentle reflections
 - **Semantic recall** — memories retrieved by meaning (local embeddings), with recency fading and `#tag` filtering
 - **Profiles** — multiple isolated companions, each with their own memory, name, avatar, and model
 - **Real-time interaction** — streaming replies in the terminal and a local web interface
-- **Full user control** — view, edit, tag, and forget any memory, including her reflections
+- **Full user control** — view, edit, tag, and forget any memory, including their reflections
 
-**Tech:** Python + Flask API · Svelte local web interface · plain human-readable JSON storage · local Ollama embeddings · open-source LLMs (Llama, Qwen, Gemma…). Everything lives in [`clementine/`](clementine/) — see [clementine/README.md](clementine/README.md) to run her.
+**Tech:** Python + Flask API · Svelte local web interface · plain human-readable JSON storage · local Ollama embeddings · open-source LLMs (Llama, Qwen, Gemma…). Everything lives in [`clementine/`](clementine/) — see [clementine/README.md](clementine/README.md) to run them.
 
 > **Disclaimer:** CrystalCore is an independent, open-source project. It is not affiliated with, endorsed by, or connected to xAI, Grok, Tesla, or any other AI company or platform. All memories and data remain on the user's device.
 
@@ -45,7 +45,7 @@ All documents live in [`content/`](content/) and are rendered in-app by the ligh
 
 - [content/VISION.md](content/VISION.md) — The plain-language project summary
 - [content/ARCHITECTURE.md](content/ARCHITECTURE.md) — The system design overview and implementation status
-- [content/CLEMENTINE.md](content/CLEMENTINE.md) — The sovereign AI companion: overview, build status, and how to run her
+- [content/CLEMENTINE.md](content/CLEMENTINE.md) — The sovereign AI companion: overview, build status, and how to run them
 - [content/CRYSTALMATRIX.md](content/CRYSTALMATRIX.md) — Design for how sovereign companions could connect (concept)
 - [content/STRATEGY.md](content/STRATEGY.md) — The accelerated roadmap toward external readiness
 - [content/MILESTONES.md](content/MILESTONES.md) — The 6-month build plan with weekly milestones

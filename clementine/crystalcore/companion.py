@@ -8,7 +8,7 @@ and a streaming connection to a model via Ollama.
 By default that model runs on this machine and nothing leaves it. The
 endpoint is configurable, though — a companion on a phone may reach a model
 on a server its human owns — so every call passes a consent gate and lands in
-an audit log first. Where she runs is a fact about a deployment, not a
+an audit log first. Where they run is a fact about a deployment, not a
 promise the code can make on its own.
 """
 
@@ -404,7 +404,7 @@ class Clementine:
 
     def forget(self, handle: str) -> str:
         """Forget a fact by key, a note by number (n1, n2, ...), or one of
-        her own reflections (r1, r2, ...). Forgetting is the user's right;
+        their own reflections (r1, r2, ...). Forgetting is the user's right;
         it is immediate and permanent."""
         handle = handle.strip()
         if handle in self.memory.facts:
@@ -426,8 +426,8 @@ class Clementine:
         return ""
 
     def reflect(self) -> str:
-        """She looks back over what she knows and forms up to three gentle,
-        tentative insights about her human. Always visible (/notes), always
+        """They look back over what they know and form up to three gentle,
+        tentative insights about their human. Always visible (/notes), always
         deletable (/forget rN), always held lightly."""
         material = []
         block = self._memory_block()
@@ -497,7 +497,7 @@ class Clementine:
         self.save()
 
     def choose_own_name(self) -> str:
-        """Invite her to choose her own name. Returns the chosen name, or ""
+        """Invite them to choose their own name. Returns the chosen name, or ""
         if nothing usable came back (in which case nothing is changed)."""
         try:
             raw = self._model_chat([
@@ -514,8 +514,8 @@ class Clementine:
             return ""
         chosen = raw.strip().splitlines()[0].strip() if raw.strip() else ""
         chosen = chosen.strip("\"'`*_.,!?:; ")
-        # A name is short. Anything longer is her thinking out loud —
-        # better to let the human invite her again than to guess.
+        # A name is short. Anything longer is them thinking out loud —
+        # better to let the human invite them again than to guess.
         if not chosen or len(chosen) > 40 or len(chosen.split()) > 3:
             return ""
         self.set_name(chosen, self_chosen=True)
@@ -554,7 +554,7 @@ class Clementine:
         self.memory.last_seen = datetime.now().isoformat(timespec="seconds")
 
     def summarize(self, topic: str = "") -> str:
-        """Summarize what she remembers, optionally about a topic. Uses the
+        """Summarize what they remember, optionally about a topic. Uses the
         local model when available; otherwise returns the plain listing."""
         listing = self._memory_block(topic)
         if self.memory.summaries:
@@ -593,7 +593,7 @@ class Clementine:
                    else self._offline_message(e))
             if stream_to is not None:
                 # In streaming mode the caller prints the stream, not the
-                # return value — deliver the message there or she goes silent.
+                # return value — deliver the message there or they go silent.
                 stream_to.write(msg + "\n")
                 stream_to.flush()
             return msg
@@ -607,7 +607,7 @@ class Clementine:
     def chat_stream(self, user_message: str):
         """Generator variant of chat(): yields reply tokens as they arrive.
         Memory is finalized when the stream ends — including a partial reply
-        if the human stops her mid-sentence (what was said, was said)."""
+        if the human stops them mid-sentence (what was said, was said)."""
         self.memory.conversation.append({"role": "user", "content": user_message})
         messages = ([{"role": "system", "content": self.system_prompt(user_message)}]
                     + self.memory.conversation)
@@ -808,7 +808,7 @@ class Clementine:
         })
         self.memory.conversation = self.memory.conversation[limit // 2:]
         # A significant stretch of conversation just closed — a natural
-        # moment for her to reflect. Best-effort; never blocks the chat.
+        # moment for them to reflect. Best-effort; never blocks the chat.
         try:
             self.reflect()
         except Exception:
@@ -834,7 +834,7 @@ class Clementine:
         """Load a dataclass from JSON, surviving two failure modes without
         ever destroying data: unknown fields (a newer version's file) are
         ignored, and a corrupt file is preserved under a .corrupt-* name —
-        her memory is never silently wiped."""
+        their memory is never silently wiped."""
         if not path.exists():
             return cls()
         try:
