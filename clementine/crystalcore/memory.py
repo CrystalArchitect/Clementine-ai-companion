@@ -19,6 +19,12 @@ class Personality:
     avatar: str = ""            # an emoji for this profile, e.g. "🌟"
     description: str = ""       # a short line about this profile
     model: str = ""             # this profile's preferred model ("" = default)
+    # Which model service this profile talks to. Empty means the local
+    # default; anything else is a deliberate choice to reach off this
+    # machine, and every such call still has to pass the consent gate.
+    llm_provider: str = ""      # "ollama" (local), or an OpenAI-compatible name
+    llm_endpoint: str = ""      # the exact URL to reach; never guessed for you
+    llm_model: str = ""         # model name at that service, e.g. "gpt-5-5"
 
 
 @dataclass

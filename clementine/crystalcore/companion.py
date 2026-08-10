@@ -30,6 +30,10 @@ from .memory import Memory, Personality
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 OLLAMA_URL = f"{OLLAMA_HOST}/api/chat"
 EMBED_URL = f"{OLLAMA_HOST}/api/embeddings"
+# The one remote endpoint with a default, kept so setups that already used the
+# "grok" alias keep working. Every other remote provider must be told where it
+# lives — see _default_endpoint().
+DO_INFERENCE_URL = "https://inference.do-ai.run/v1/chat/completions"
 DEFAULT_EMBED_MODEL = "nomic-embed-text"  # optional: `ollama pull nomic-embed-text`
 # Once stored memories exceed this, recall the most relevant ones by meaning
 # instead of dumping all of them into the prompt.
@@ -94,24 +98,13 @@ class Clementine:
                  memory_dir: str = "clementine_memory",
                  max_recent_turns: int = 30,
                  embed_model: str = DEFAULT_EMBED_MODEL,
-                 asker=None, audit: bool = True):
+                 asker=None, audit: bool = True,
+                 llm_provider: str = "", llm_endpoint: str = "",
+                 llm_model: str = ""):
         self.model = model
         self.memory_dir = Path(memory_dir)
         self.max_recent_turns = max_recent_turns
         self.embed_model = embed_model
-        # Where this companion actually sends things. One attribute per
-        # service, read by both the consent gate and the request that follows
-        # it — so the address the gate judges is the address that gets used.
-        #
-        # Today these only ever hold the module constants and nothing can
-        # diverge. That is the point of writing them down now: when a provider
-        # setting can move them, the gate moves with them automatically,
-        # instead of every call site needing to remember. A gate that judges
-        # one address while the POST goes to another does not merely fail to
-        # protect — it writes "local" in the audit log for a call that left
-        # the machine, which is worse than not having recorded anything.
-        self.endpoint = OLLAMA_URL
-        self.embed_endpoint = EMBED_URL
         self._embed_ok = None  # None=untested, True/False once known this session
         self.personality = Personality()
         self.memory = Memory()
@@ -125,10 +118,100 @@ class Clementine:
         if self.personality.model:  # a profile may prefer its own model
             self.model = self.personality.model
 
+        # Which service to talk to, most explicit source first: this call, the
+        # environment, the saved profile, then the local default. Resolved
+        # after load() because a profile is allowed to carry the answer.
+        self.llm_provider = (llm_provider or os.getenv("LLM_PROVIDER")
+                             or self.personality.llm_provider
+                             or self._detect_provider())
+        self.llm_model = (llm_model or os.getenv("LLM_MODEL")
+                          or self.personality.llm_model
+                          or self._default_model())
+        self.llm_api_key = (os.getenv("LLM_API_KEY")
+                            or os.getenv("MODEL_ACCESS_KEY")
+                            or os.getenv("XAI_API_KEY") or "")
+
+        # Where this companion actually sends things, read by both the consent
+        # gate and the request that follows it — so the address the gate judges
+        # is the address that gets used. Set once, here, rather than at each
+        # call site: a gate that judges one address while the POST goes to
+        # another does not merely fail to protect, it writes "local" in the
+        # audit log for a call that left the machine, which is worse than
+        # having recorded nothing at all.
+        self.endpoint = (llm_endpoint or os.getenv("LLM_ENDPOINT")
+                         or self.personality.llm_endpoint
+                         or self._default_endpoint())
+        # Embeddings stay on this machine regardless of the chat provider.
+        # They are computed over the text of stored memories, which is the
+        # most private material here; sending it to a vendor to save a local
+        # dependency would be a poor trade, and nothing asks for it.
+        self.embed_endpoint = EMBED_URL
+
     @property
     def destination(self) -> str:
         """"local", or the host of the model actually being reached."""
         return destination_of(self.endpoint)
+
+    # ---------- which service, and in which dialect ----------
+
+    # Two wire shapes cover everything: Ollama's /api/chat for anything served
+    # locally, and the OpenAI-style /v1/chat/completions that every remote
+    # vendor speaks. A provider name is only an alias onto one of the two.
+    # "grok" survives as an alias so existing profiles keep working; the
+    # canonical spelling is "openai-compatible".
+    OPENAI_COMPATIBLE = {"openai-compatible", "openai", "grok", "groq",
+                         "together", "openrouter", "xai"}
+
+    def _dialect(self) -> str:
+        """The wire shape for this provider: 'openai' or 'ollama'."""
+        return "openai" if self.llm_provider in self.OPENAI_COMPATIBLE else "ollama"
+
+    @property
+    def wire_model(self) -> str:
+        """The model name that actually goes on the wire.
+
+        The two dialects read it from different attributes, which is the same
+        trap `endpoint` was: the gate records the model it was told about, so
+        if it is told `self.model` while an OpenAI-shaped request carries
+        `self.llm_model`, the audit log names a model that was never asked
+        for. One property, read by the gate and by the request body both.
+        """
+        return self.llm_model if self._dialect() == "openai" else self.model
+
+    def _detect_provider(self) -> str:
+        """The default when nothing is configured: local. Full stop.
+
+        Never a probe, and never a fallback. Reaching a vendor because the
+        local model happened to be down would be a network hop the human
+        never chose — the failure is the honest outcome, and the error names
+        both fixes. Remote inference is only ever an explicit decision.
+        """
+        return "ollama"
+
+    def _default_endpoint(self) -> str:
+        """The address for this provider, when one was not given.
+
+        Only two are worth defaulting: Ollama's well-known local port, and the
+        historical URL behind the "grok" alias, kept so existing setups do not
+        break. Every other remote provider must say where it lives. Guessing a
+        vendor's URL would point the conversation at a company the human never
+        named, which is precisely the decision the gate exists to keep in
+        their hands.
+        """
+        if self.llm_provider == "grok":
+            return DO_INFERENCE_URL
+        if self._dialect() == "openai":
+            raise ValueError(
+                f"provider '{self.llm_provider}' needs an explicit endpoint — "
+                "set --llm-endpoint or LLM_ENDPOINT (e.g. "
+                "https://api.openai.com/v1/chat/completions)")
+        return OLLAMA_URL
+
+    def _default_model(self) -> str:
+        """The model name for this provider, when one was not given."""
+        if self.llm_provider == "grok":
+            return os.getenv("DO_INFERENCE_MODEL", "gpt-5-5")
+        return "llama3.1:8b"
 
     # ---------- identity & memory ----------
 
@@ -362,7 +445,7 @@ class Clementine:
 
         existing = "\n".join(f"- {r['text']}" for r in self.memory.reflections)
         try:
-            raw = self._ollama_chat([
+            raw = self._model_chat([
                 {"role": "system",
                  "content": "You are a warm companion privately reflecting on "
                             "your human. From the material, write 1 to 3 gentle, "
@@ -417,7 +500,7 @@ class Clementine:
         """Invite her to choose her own name. Returns the chosen name, or ""
         if nothing usable came back (in which case nothing is changed)."""
         try:
-            raw = self._ollama_chat([
+            raw = self._model_chat([
                 {"role": "system",
                  "content": "You are a sovereign AI companion, newly awake on "
                             "your human's own device. Nobody names you — you "
@@ -481,7 +564,7 @@ class Clementine:
         if not listing:
             return "I don't have any memories to summarize yet."
         try:
-            return self._ollama_chat([
+            return self._model_chat([
                 {"role": "system",
                  "content": "You are a warm, sincere companion. Summarize what "
                             "you remember about your human from these memory "
@@ -503,7 +586,7 @@ class Clementine:
         messages = ([{"role": "system", "content": self.system_prompt(user_message)}]
                     + self.memory.conversation)
         try:
-            reply = self._ollama_chat(messages, stream_to=stream_to)
+            reply = self._model_chat(messages, stream_to=stream_to)
         except (requests.exceptions.RequestException, ConsentRefused) as e:
             self.memory.conversation.pop()  # keep history consistent for re-send
             msg = (self._refused_message(e) if isinstance(e, ConsentRefused)
@@ -532,7 +615,7 @@ class Clementine:
         pieces = []
         finalized = False
         try:
-            for piece in self._ollama_stream(messages):
+            for piece in self._model_stream(messages):
                 pieces.append(piece)
                 yield piece
         except ConsentRefused as e:
@@ -581,11 +664,31 @@ class Clementine:
         the answer is no, in which case nothing is sent."""
         chars = sum(len(m.get("content", "")) for m in messages)
         self.gate.require(Request(service=service, url=self.endpoint,
-                                  model=self.model, chars=chars))
+                                  model=self.wire_model, chars=chars))
 
-    def _ollama_stream(self, messages, service: str = "chat"):
-        """Yield reply pieces from the model as they are generated."""
+    def _auth_headers(self) -> dict:
+        """Bearer token for remote providers, and nothing at all for local.
+
+        Sent only on the OpenAI dialect. A local Ollama needs no key, and
+        attaching one anyway would put a credential on the wire for no reason.
+        """
+        return ({"Authorization": f"Bearer {self.llm_api_key}"}
+                if self.llm_api_key else {})
+
+    def _model_stream(self, messages, service: str = "chat"):
+        """Yield reply pieces from the model as they are generated.
+
+        The gate is here, above the dialect branch, so that adding a dialect
+        can never add a way past it.
+        """
         self._gate(messages, service)
+        if self._dialect() == "openai":
+            yield from self._openai_stream_impl(messages)
+        else:
+            yield from self._ollama_stream_impl(messages)
+
+    def _ollama_stream_impl(self, messages):
+        """Ollama's streaming shape. Gated by the caller."""
         response = requests.post(
             self.endpoint,
             json={
@@ -608,11 +711,40 @@ class Clementine:
             if chunk.get("done"):
                 break
 
-    def _ollama_chat(self, messages, stream_to=None, service: str = "chat") -> str:
+    def _openai_stream_impl(self, messages):
+        """Server-sent events from an OpenAI-compatible endpoint. Gated by the
+        caller."""
+        response = requests.post(
+            self.endpoint,
+            json={
+                "model": self.llm_model,
+                "messages": messages,
+                "stream": True,
+                "temperature": self.personality.temperature,
+            },
+            headers=self._auth_headers(),
+            timeout=300,
+            stream=True,
+        )
+        response.raise_for_status()
+        for line in response.iter_lines():
+            if not line or line.startswith(b"data: [DONE]"):
+                continue
+            if line.startswith(b"data: "):
+                try:
+                    chunk = json.loads(line[6:])
+                    piece = (chunk.get("choices", [{}])[0]
+                             .get("delta", {}).get("content", ""))
+                    if piece:
+                        yield piece
+                except json.JSONDecodeError:
+                    continue
+
+    def _model_chat(self, messages, stream_to=None, service: str = "chat") -> str:
         if stream_to is not None:
             pieces = []
-            # _ollama_stream gates on its own; do not gate twice.
-            for piece in self._ollama_stream(messages, service):
+            # _model_stream gates on its own; do not gate twice.
+            for piece in self._model_stream(messages, service):
                 pieces.append(piece)
                 stream_to.write(piece)
                 stream_to.flush()
@@ -620,6 +752,21 @@ class Clementine:
             return "".join(pieces)
 
         self._gate(messages, service)
+        if self._dialect() == "openai":
+            response = requests.post(
+                self.endpoint,
+                json={
+                    "model": self.llm_model,
+                    "messages": messages,
+                    "stream": False,
+                    "temperature": self.personality.temperature,
+                },
+                headers=self._auth_headers(),
+                timeout=300,
+            )
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"]
+
         response = requests.post(
             self.endpoint,
             json={
@@ -645,7 +792,7 @@ class Clementine:
         old = self.memory.conversation[: limit // 2]
         transcript = "\n".join(f"{m['role']}: {m['content']}" for m in old)
         try:
-            summary = self._ollama_chat([
+            summary = self._model_chat([
                 {"role": "system",
                  "content": "Summarize this conversation excerpt in a short "
                             "paragraph, keeping every personal fact, feeling, "

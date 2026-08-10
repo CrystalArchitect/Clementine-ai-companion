@@ -102,10 +102,15 @@ def create_app(companion: Clementine) -> Flask:
             reachable = True
         except requests.exceptions.RequestException:
             pass
+        # Whether Ollama has the model pulled is only a meaningful question
+        # when Ollama is the one being asked. Against a vendor it would always
+        # answer "no" and read as a fault, so it is null — unknown, not false.
+        local_dialect = c._dialect() == "ollama"
         return jsonify({
             "ok": True,
-            "model": c.model,
-            "model_present": c.model in models if reachable else None,
+            "model": c.wire_model,
+            "model_present": (c.wire_model in models
+                              if reachable and local_dialect else None),
             "models": models,
             "ollama": reachable,
             "ollama_host": OLLAMA_HOST,
@@ -113,6 +118,11 @@ def create_app(companion: Clementine) -> Flask:
             # companion rather than recomputed here, so this endpoint reports
             # where the calls actually go and cannot drift from it.
             "destination": c.destination,
+            # Named plainly, because "which company is reading this" is the
+            # question this endpoint exists to answer honestly.
+            "provider": c.llm_provider,
+            "endpoint": c.endpoint,
+            "wire_model": c.wire_model,
             "embeddings": c._embed_ok,
             "audit_entries": len(c.audit.entries()) if c.audit else 0,
         })
@@ -292,6 +302,19 @@ def main():
     parser.add_argument("--host", default="127.0.0.1",
                         help="Interface to bind. Leave as 127.0.0.1 unless an "
                              "authenticating reverse proxy sits in front.")
+    # Same three as the CLI. A remote provider here still needs
+    # --remote-model-ok: choosing where to send is not the same act as
+    # consenting to send, and the server asks for both.
+    parser.add_argument("--llm-provider", default="",
+                        help="Which model service to use. Default is ollama, "
+                             "on this machine. Anything else sends "
+                             "conversation off this device.")
+    parser.add_argument("--llm-endpoint", default="",
+                        help="Exact URL for a remote provider. Required for "
+                             "remote providers — never guessed for you.")
+    parser.add_argument("--llm-model", default="",
+                        help="Model name at that service. The API key comes "
+                             "from LLM_API_KEY in the environment.")
     parser.add_argument("--remote-model-ok", action="store_true",
                         help="Consent, given once here, for this server to use "
                              "a model that is not on this machine (OLLAMA_HOST). "
@@ -310,13 +333,16 @@ def main():
                            remember=False)
 
     companion = Clementine(model=args.model, memory_dir=args.memory_dir,
-                           asker=asker)
+                           asker=asker,
+                           llm_provider=args.llm_provider,
+                           llm_endpoint=args.llm_endpoint,
+                           llm_model=args.llm_model)
     app = create_app(companion)
     name = companion.personality.name or "Clementine"
 
     where = companion.destination
     print(f"{name} is at http://{args.host}:{args.port}")
-    print(f"  model     {companion.model} on {'this machine' if where == 'local' else where}")
+    print(f"  model     {companion.wire_model} on {'this machine' if where == 'local' else where}")
     if where != "local" and not args.remote_model_ok:
         print("            refusing to use it — pass --remote-model-ok to consent")
     print(f"  face      {'built' if WEBAPP_DIST.exists() else 'NOT BUILT — cd webapp && npm run build'}")

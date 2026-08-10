@@ -7,7 +7,7 @@ These cover the parts that must never quietly break: the similarity/recency
 maths behind memory recall, the memory condense boundary, JSON persistence and
 its data-preserving corrupt-file handling, and profile isolation. Nothing here
 touches the network — the two methods that would call Ollama (`_embed` and
-`_ollama_chat`) are stubbed, and the offline path is asserted explicitly.
+`_model_chat`) are stubbed, and the offline path is asserted explicitly.
 
 Run: `python -m pytest tests/` from clementine/.
 """
@@ -142,7 +142,7 @@ def _fill_conversation(c, n):
 
 def test_condense_noop_at_or_below_limit(tmp_path, monkeypatch):
     c = _offline(Clementine(memory_dir=str(tmp_path), max_recent_turns=2))  # limit = 4
-    monkeypatch.setattr(c, "_ollama_chat", lambda *a, **k: pytest.fail("must not summarize"))
+    monkeypatch.setattr(c, "_model_chat", lambda *a, **k: pytest.fail("must not summarize"))
     _fill_conversation(c, 4)
     c._condense_if_needed()
     assert len(c.memory.conversation) == 4
@@ -151,7 +151,7 @@ def test_condense_noop_at_or_below_limit(tmp_path, monkeypatch):
 
 def test_condense_folds_oldest_half_into_a_summary(tmp_path, monkeypatch):
     c = _offline(Clementine(memory_dir=str(tmp_path), max_recent_turns=2))  # limit = 4
-    monkeypatch.setattr(c, "_ollama_chat", lambda *a, **k: "SUMMARY OF THE OLD PART")
+    monkeypatch.setattr(c, "_model_chat", lambda *a, **k: "SUMMARY OF THE OLD PART")
     monkeypatch.setattr(c, "reflect", lambda: None)  # reflect would otherwise call Ollama
     _fill_conversation(c, 5)  # 5 > limit(4)
 

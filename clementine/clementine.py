@@ -57,6 +57,25 @@ def main():
         "--profile", default="",
         help="Named profile (separate person, separate memory), e.g. "
              "--profile Crystal. Profiles live in clementine_profiles/.")
+    # Reaching a model that is not on this machine is a deliberate act, so it
+    # is spelled out rather than inferred. Nothing here bypasses the gate:
+    # every remote call still asks, in the terminal, before it is made.
+    parser.add_argument(
+        "--llm-provider", default="",
+        help="Which model service to use. Default is ollama, on this "
+             "machine. Any other value is a choice to send conversation "
+             "off this device: openai-compatible, openai, xai, groq, "
+             "together, openrouter, grok.")
+    parser.add_argument(
+        "--llm-endpoint", default="",
+        help="The exact URL for a remote provider, e.g. "
+             "https://api.openai.com/v1/chat/completions. Required for "
+             "remote providers — no vendor address is ever guessed for you.")
+    parser.add_argument(
+        "--llm-model", default="",
+        help="Model name at that service, e.g. gpt-5-5. The API key comes "
+             "from LLM_API_KEY in the environment, never from a flag, so it "
+             "does not end up in your shell history.")
     args = parser.parse_args()
     if args.profile:
         args.memory_dir = profile_dir(args.profile)
@@ -67,7 +86,10 @@ def main():
     # In the terminal a human is present, so she can ask before sending
     # anything to a model that is not on this machine.
     companion = Clementine(model=args.model, memory_dir=args.memory_dir,
-                           asker=terminal_asker)
+                           asker=terminal_asker,
+                           llm_provider=args.llm_provider,
+                           llm_endpoint=args.llm_endpoint,
+                           llm_model=args.llm_model)
 
     name = companion.personality.name or "Clementine"
     returning = bool(companion.memory.conversation or companion.memory.summaries)
