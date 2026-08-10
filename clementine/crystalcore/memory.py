@@ -13,6 +13,11 @@ class Personality:
     """Tunable personality settings, kept in the memory folder as config.json."""
     name: str = ""              # their name; empty until given or chosen
     name_self_chosen: bool = False  # True when they chose their own name
+    # Pronouns, on exactly the same footing as the name: empty until the human
+    # or the companion decides. Empty is not a third gender and not a refusal
+    # of the question — it is the honest state of not having been asked yet.
+    gender: str = ""            # "male" (he), "female" (she), "they" (they)
+    gender_self_chosen: bool = False  # True when they chose their own
     human_name: str = ""        # what they call you, if you tell them
     temperature: float = 0.8    # higher = more playful, lower = more precise
     style_notes: str = ""       # freeform extra guidance, e.g. "more poetic"

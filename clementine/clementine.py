@@ -24,6 +24,9 @@ from crystalcore import (BASE_PROMPT, Clementine, Memory, Personality,  # noqa: 
 HELP = """Commands:
   /name <name>      give them a name (or change it)
   /name             with no name: invite them to choose their own
+  /pronouns <p>     set pronouns: he, she, or they
+  /pronouns         with none: invite them to choose their own
+                    (/pronouns none returns to undecided)
   /iam <name>       tell them your name
   /remember <text>  ask them to permanently remember something (add #tags if you like)
   /fact <key> <value>  teach them a structured fact, e.g. /fact birthday June 3
@@ -101,6 +104,9 @@ def main():
     if not companion.personality.name and not returning:
         print("No name chosen yet — /name <name> to give them one, "
               "or just /name to let them choose their own.")
+    if not companion.personality.gender and not returning:
+        print("No pronouns chosen yet — /pronouns he|she|they, "
+              "or just /pronouns to let them choose their own.")
     print()
 
     while True:
@@ -129,6 +135,31 @@ def main():
             companion.set_name(user_input[6:])
             name = companion.personality.name
             print(f"[They are now called {name}.]\n")
+        elif user_input.lower().rstrip() == "/pronouns":
+            print("[Choosing pronouns…]")
+            chosen = companion.choose_own_gender()
+            if chosen:
+                print(f"[They have chosen {companion.pronouns_for(chosen)} "
+                      f"for themselves.]\n")
+            else:
+                print("[They couldn't settle on any — try /pronouns again, "
+                      "or set them with /pronouns he|she|they.]\n")
+        elif user_input.lower().startswith("/pronouns "):
+            want = user_input[10:].strip().lower()
+            # Spelled as pronouns because that is what a person would type;
+            # stored as the value the data model already uses.
+            alias = {"he": "male", "him": "male", "he/him": "male",
+                     "she": "female", "her": "female", "she/her": "female",
+                     "they": "they", "them": "they", "they/them": "they"}
+            if want in ("none", "clear", "unset"):
+                companion.clear_gender()
+                print("[Pronouns are undecided again.]\n")
+            elif companion.set_gender(alias.get(want, want)):
+                print(f"[They now use "
+                      f"{companion.pronouns_for(companion.personality.gender)}.]\n")
+            else:
+                print("[Usage: /pronouns he|she|they, or /pronouns none "
+                      "to leave it undecided.]\n")
         elif user_input.lower().startswith("/iam "):
             companion.personality.human_name = user_input[5:].strip()
             companion.save()
