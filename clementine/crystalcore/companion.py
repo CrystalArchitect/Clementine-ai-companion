@@ -99,6 +99,19 @@ class Clementine:
         self.memory_dir = Path(memory_dir)
         self.max_recent_turns = max_recent_turns
         self.embed_model = embed_model
+        # Where this companion actually sends things. One attribute per
+        # service, read by both the consent gate and the request that follows
+        # it — so the address the gate judges is the address that gets used.
+        #
+        # Today these only ever hold the module constants and nothing can
+        # diverge. That is the point of writing them down now: when a provider
+        # setting can move them, the gate moves with them automatically,
+        # instead of every call site needing to remember. A gate that judges
+        # one address while the POST goes to another does not merely fail to
+        # protect — it writes "local" in the audit log for a call that left
+        # the machine, which is worse than not having recorded anything.
+        self.endpoint = OLLAMA_URL
+        self.embed_endpoint = EMBED_URL
         self._embed_ok = None  # None=untested, True/False once known this session
         self.personality = Personality()
         self.memory = Memory()
@@ -114,8 +127,8 @@ class Clementine:
 
     @property
     def destination(self) -> str:
-        """"local", or the host of the model she is actually reaching."""
-        return destination_of(OLLAMA_URL)
+        """"local", or the host of the model actually being reached."""
+        return destination_of(self.endpoint)
 
     # ---------- identity & memory ----------
 
@@ -217,13 +230,13 @@ class Clementine:
         if self._embed_ok is False:
             return None
         try:
-            self.gate.require(Request(service="embed", url=EMBED_URL,
+            self.gate.require(Request(service="embed", url=self.embed_endpoint,
                                       model=self.embed_model, chars=len(text)))
         except ConsentRefused:
             self._embed_ok = False
             return None
         try:
-            r = requests.post(EMBED_URL,
+            r = requests.post(self.embed_endpoint,
                               json={"model": self.embed_model, "prompt": text},
                               timeout=60)
             r.raise_for_status()
@@ -557,7 +570,7 @@ class Clementine:
 
     @staticmethod
     def _refused_message(e: "ConsentRefused") -> str:
-        """Said in her own voice: the request stopped at the gate, and it is
+        """Said in their own voice: the request stopped at the gate, and it is
         recorded as refused. Nothing was sent."""
         return (f"[I didn't send that. It would have gone to "
                 f"{e.request.destination}, and {e.reason} — so it stayed here. "
@@ -567,14 +580,14 @@ class Clementine:
         """Pass this call through the consent gate. Raises ConsentRefused if
         the answer is no, in which case nothing is sent."""
         chars = sum(len(m.get("content", "")) for m in messages)
-        self.gate.require(Request(service=service, url=OLLAMA_URL,
+        self.gate.require(Request(service=service, url=self.endpoint,
                                   model=self.model, chars=chars))
 
     def _ollama_stream(self, messages, service: str = "chat"):
         """Yield reply pieces from the model as they are generated."""
         self._gate(messages, service)
         response = requests.post(
-            OLLAMA_URL,
+            self.endpoint,
             json={
                 "model": self.model,
                 "messages": messages,
@@ -608,7 +621,7 @@ class Clementine:
 
         self._gate(messages, service)
         response = requests.post(
-            OLLAMA_URL,
+            self.endpoint,
             json={
                 "model": self.model,
                 "messages": messages,
