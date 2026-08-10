@@ -83,16 +83,37 @@ def main():
     if args.profile:
         args.memory_dir = profile_dir(args.profile)
 
-    print("Starting Clementine (local mode)...")
-    print("Make sure Ollama is running with a model loaded.\n")
+    print("Starting Clementine…")
 
     # In the terminal a human is present, so they can ask before sending
     # anything to a model that is not on this machine.
-    companion = Clementine(model=args.model, memory_dir=args.memory_dir,
-                           asker=terminal_asker,
-                           llm_provider=args.llm_provider,
-                           llm_endpoint=args.llm_endpoint,
-                           llm_model=args.llm_model)
+    #
+    # A missing endpoint or model name is a refusal to guess, not a crash, and
+    # it should read as one. The message already names the flag that fixes it;
+    # wrapping it in a stack trace only makes that line harder to find.
+    try:
+        companion = Clementine(model=args.model, memory_dir=args.memory_dir,
+                               asker=terminal_asker,
+                               llm_provider=args.llm_provider,
+                               llm_endpoint=args.llm_endpoint,
+                               llm_model=args.llm_model)
+    except ValueError as e:
+        print(f"Cannot start: {e}", file=sys.stderr)
+        raise SystemExit(2)
+
+    # Said after resolution, not before it. This line used to read "(local
+    # mode)" and "Make sure Ollama is running" unconditionally, printed before
+    # anything had been worked out — so starting with a vendor configured
+    # announced local mode and then contradicted itself. Where conversation
+    # goes is the one thing this program must never be casually wrong about,
+    # and `destination` is the same value the consent gate judges.
+    where = companion.destination
+    if where == "local":
+        print("Your conversation stays on this machine. "
+              "Ollama needs to be running with a model loaded.\n")
+    else:
+        print(f"Configured to reach {where}, which is not this machine. "
+              f"Every call there asks first.\n")
 
     name = companion.personality.name or "Clementine"
     returning = bool(companion.memory.conversation or companion.memory.summaries)
