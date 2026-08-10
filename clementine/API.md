@@ -174,6 +174,8 @@ What is actually true right now — model, destination, whether the model is rea
 | `endpoint` | the exact URL model calls are sent to |
 | `wire_model` | same as model; named for the audit log's field |
 | `embeddings` | true/false once tried, null before |
+| `recall_degraded` | true when memories exceed the prompt budget and embeddings are unavailable, so all are sent instead of the most relevant |
+| `recall_notice` | that state as a sentence, or empty |
 | `audit_entries` | how many calls have been recorded |
 
 
