@@ -91,8 +91,20 @@
   {:else}
     Where the model runs could not be determined, so nothing is claimed about it.
   {/if}
-  Their memory lives in a folder you own{#if auditCount}, and every call they make
-  is in an append-only record ({auditCount} so far){/if}. Non solus.
+  <!--
+    This used to end at "an append-only record (N so far)", which is true and
+    was no use to anybody: it offered the record as reassurance while giving
+    no way to reach it. An assurance you cannot check is a request to be
+    trusted, which is the one thing this record exists so nobody has to do.
+
+    So it now names the file and admits the window cannot open it yet — the
+    same standard the Senses panel already holds itself to for voice and
+    sight, rather than a quieter one for the feature that matters most.
+  -->
+  Their memory lives in a folder you own{#if auditCount}, and every call they
+  make is appended to <code>audit.jsonl</code> beside it — {auditCount} so far.
+  It is plain text: open it yourself and read every line. Reading it in this
+  window is not built yet{/if}. Non solus.
 </footer>
 
 <style>
@@ -173,6 +185,17 @@
     color: var(--muted);
     font-size: 0.78rem;
     border-top: 1px solid var(--line);
+  }
+  /* A filename the person is being told to go and open should look like one,
+     rather than inheriting the browser's default serif-ish monospace against
+     a dark background. */
+  footer code {
+    font-family: var(--mono);
+    font-size: 0.95em;
+    color: var(--ink);
+    background: rgba(233, 235, 244, 0.07);
+    border-radius: 3px;
+    padding: 1px 4px;
   }
 
   @media (max-width: 760px) {
