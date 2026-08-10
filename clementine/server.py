@@ -21,13 +21,19 @@ authentication of its own — that is the proxy's job (see deploy/).
 """
 
 import argparse
+import json
+from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 
 import requests
-from flask import Flask, Response, jsonify, request, send_from_directory
+from flask import (Flask, Response, abort, jsonify, request,
+                   send_from_directory)
 
-from crystalcore import (Clementine, Verdict, delete_profile, list_profiles,
-                         profile_dir, profile_meta)
+import api_surface
+from crystalcore import (MEMORY_SCHEMA_VERSION, SYSTEM_VERSION, Clementine,
+                         Verdict, delete_profile, list_profiles, profile_dir,
+                         profile_meta)
 from crystalcore import profiles as _profiles
 from crystalcore.companion import OLLAMA_HOST
 
@@ -87,6 +93,60 @@ def create_app(companion: Clementine) -> Flask:
                             "error": "this endpoint requires "
                                      "Content-Type: application/json"}), 415
         return None
+
+    @app.errorhandler(404)
+    @app.errorhandler(405)
+    def unknown_route(err):
+        """A JSON API should not answer with an HTML page.
+
+        Flask's default 404/405 body is HTML, which a client parsing JSON
+        chokes on. A mistyped path under `/api/` also matches the OPTIONS
+        preflight catch-all, so Werkzeug rejects the *method* and returns
+        405 rather than the 404 a typo deserves — both are handled.
+
+        Only for `/api/`. Everything else belongs to the interface, whose
+        own handler falls back to index.html so client-side routes survive
+        a hard refresh.
+        """
+        if not request.path.startswith("/api"):
+            return err
+        return jsonify({
+            "error": err.name.lower(),
+            "detail": f"nothing here answers {request.method} {request.path}",
+            "hint": "GET /api lists every route this server has",
+        }), err.code
+
+    # ---------- what this API is ----------
+
+    @app.get("/api")
+    def api_index():
+        """Every route, with what it takes and returns.
+
+        Generated from `api_surface.ROUTES`, which tests/test_api_surface.py
+        checks against Flask's own url_map in both directions — so a route
+        added here without an entry there fails the suite, and an entry
+        describing a route that does not exist fails it too. A documented
+        endpoint nobody implemented is a dreamed line pretending it was
+        measured.
+
+        Unlike the monorepo fork this came from, `/` is not an alias for
+        this index: that address serves the built interface here, and a
+        person opening the printed URL should meet the companion rather
+        than a JSON listing.
+        """
+        return jsonify(api_surface.index(
+            name=holder["c"].personality.name or "Clementine",
+            version=SYSTEM_VERSION,
+            memory_schema=MEMORY_SCHEMA_VERSION,
+        ))
+
+    @app.get("/api/openapi.json")
+    def api_openapi():
+        """The same description, as OpenAPI, for tools that speak it."""
+        return jsonify(api_surface.openapi(
+            name=holder["c"].personality.name or "Clementine",
+            version=SYSTEM_VERSION,
+        ))
 
     # ---------- honesty endpoints ----------
 
@@ -203,6 +263,54 @@ def create_app(companion: Clementine) -> Flask:
         forgotten = holder["c"].forget(handle)
         return jsonify({"ok": bool(forgotten), "forgotten": forgotten})
 
+    @app.get("/api/export")
+    def export_memory():
+        """The whole relationship as one downloadable file.
+
+        The plain-file promise doing its job: a backup the human can read,
+        carry and import anywhere, rather than a vendor's blob. Personality
+        and memory travel together so one file restores a whole companion.
+        """
+        c = holder["c"]
+        bundle = {
+            "format": "crystalcore-memory-bundle",
+            "version": 1,
+            "exported_at": datetime.now().isoformat(timespec="seconds"),
+            "config": asdict(c.personality),
+            "memory": asdict(c.memory),
+        }
+        resp = Response(json.dumps(bundle, indent=2),
+                        mimetype="application/json")
+        stamp = datetime.now().strftime("%Y-%m-%d")
+        resp.headers["Content-Disposition"] = (
+            f'attachment; filename="clementine-memory-{stamp}.json"')
+        return resp
+
+    @app.post("/api/import")
+    def import_memory():
+        """Restore from an exported bundle, replacing this profile's memory.
+
+        Writes the files and then calls load() rather than constructing
+        dataclasses here: load() is the tolerant path — unknown fields
+        ignored, corrupt files preserved under .corrupt-* — and a bundle
+        from a newer version deserves those same protections.
+        """
+        data = request.get_json(silent=True) or {}
+        if (data.get("format") != "crystalcore-memory-bundle"
+                or data.get("version") != 1):
+            return jsonify({"ok": False,
+                            "error": "not a Clementine memory bundle"}), 400
+        c = holder["c"]
+        c.memory_dir.mkdir(parents=True, exist_ok=True)
+        (c.memory_dir / "config.json").write_text(
+            json.dumps(data.get("config") or {}, indent=2))
+        (c.memory_dir / "memory.json").write_text(
+            json.dumps(data.get("memory") or {}, indent=2))
+        c.load()
+        # The name comes back so the interface can confirm *who* arrived,
+        # not merely that something did.
+        return jsonify({"ok": True, "name": c.personality.name})
+
     @app.get("/api/profile")
     def profile_get():
         c = holder["c"]
@@ -274,6 +382,11 @@ def create_app(companion: Clementine) -> Flask:
     def webapp(asset: str = "index.html"):
         """Serve the built Svelte interface. Anything unrecognised falls back
         to index.html so client-side routes work on a hard refresh."""
+        # An unknown path under /api/ is a caller's mistake, not a
+        # client-side route. Hand it to the 404 handler so they get JSON
+        # saying so, rather than 200 and a page — which reads as success.
+        if asset.startswith("api/"):
+            abort(404)
         if not WEBAPP_DIST.exists():
             return Response(
                 "Clementine's interface has not been built yet.\n\n"

@@ -25,10 +25,19 @@ Companion = Clementine
 
 __version__ = "0.8.0"
 
+# System identity, for anything that introspects this package rather than
+# just importing from it — the API discovery index, a status display.
+SYSTEM_VERSION = f"CrystalCore.OS {__version__}"
+# Bumped only when the on-disk memory format changes in a way a client
+# would need to know about. Exported bundles carry it so an import can tell
+# whether it understands what it has been handed.
+MEMORY_SCHEMA_VERSION = "1"
+
 __all__ = [
     "Clementine", "Companion", "Personality", "Memory", "BASE_PROMPT",
     "PROFILES_DIR", "profile_dir", "list_profiles", "profile_meta",
     "delete_profile", "AuditLog", "ConsentGate", "ConsentRefused",
     "Request", "Verdict", "destination_of", "terminal_asker", "__version__",
     "PROTECTED_SOURCES", "protected_reason",
+    "SYSTEM_VERSION", "MEMORY_SCHEMA_VERSION",
 ]
