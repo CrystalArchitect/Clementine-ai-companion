@@ -26,10 +26,10 @@ from pathlib import Path
 import requests
 from flask import Flask, Response, jsonify, request, send_from_directory
 
-from crystalcore import (Clementine, Verdict, delete_profile, destination_of,
-                         list_profiles, profile_dir, profile_meta)
+from crystalcore import (Clementine, Verdict, delete_profile, list_profiles,
+                         profile_dir, profile_meta)
 from crystalcore import profiles as _profiles
-from crystalcore.companion import EMBED_URL, OLLAMA_HOST, OLLAMA_URL
+from crystalcore.companion import OLLAMA_HOST
 
 WEBAPP_DIST = Path(__file__).parent / "webapp" / "dist"
 
@@ -109,8 +109,10 @@ def create_app(companion: Clementine) -> Flask:
             "models": models,
             "ollama": reachable,
             "ollama_host": OLLAMA_HOST,
-            # "local" means the model runs on this same machine.
-            "destination": destination_of(OLLAMA_URL),
+            # "local" means the model runs on this same machine. Asked of the
+            # companion rather than recomputed here, so this endpoint reports
+            # where the calls actually go and cannot drift from it.
+            "destination": c.destination,
             "embeddings": c._embed_ok,
             "audit_entries": len(c.audit.entries()) if c.audit else 0,
         })
@@ -312,7 +314,7 @@ def main():
     app = create_app(companion)
     name = companion.personality.name or "Clementine"
 
-    where = destination_of(OLLAMA_URL)
+    where = companion.destination
     print(f"{name} is at http://{args.host}:{args.port}")
     print(f"  model     {companion.model} on {'this machine' if where == 'local' else where}")
     if where != "local" and not args.remote_model_ok:
