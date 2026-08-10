@@ -67,6 +67,9 @@ jobs:
         working-directory: clementine
         run: python -m pytest tests/ -q
 
+  # This one builds the marketing site at the repository root
+  # (package name: the-crystal-vision). It does NOT touch the companion's
+  # own interface — see companion-webapp below.
   web-checks:
     name: SvelteKit check + build
     runs-on: ubuntu-latest
@@ -82,3 +85,41 @@ jobs:
         run: npm run check
       - name: Build
         run: npm run build
+
+  # The companion's own browser interface: a separate Vite + Svelte 5 app
+  # (package name: clementine-webapp) under clementine/webapp.
+  #
+  # Until now nothing built it. The job above runs at the repository root
+  # against a different package, so the face the human actually talks to had
+  # no automated coverage at all — a broken component, a renamed CSS class, a
+  # bad import would all have merged green. Found while renaming a state value
+  # in Chat.svelte and looking for the job that would have caught a mistake.
+  #
+  # There is no `check` script here (no svelte-check in this app's devDeps),
+  # so the build is the gate: Vite fails on unresolved imports and on Svelte
+  # compile errors, which covers the failure modes that matter.
+  companion-webapp:
+    name: Companion webapp build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: clementine/webapp/package-lock.json
+      - name: Install
+        working-directory: clementine/webapp
+        run: npm ci
+      - name: Build
+        working-directory: clementine/webapp
+        run: npm run build
+      # The server serves webapp/dist and shows a "not built yet" page when it
+      # is missing, so an empty build would look like a working deployment.
+      # Assert the bundle actually exists rather than trusting the exit code.
+      - name: Assert a bundle was produced
+        working-directory: clementine/webapp
+        run: |
+          test -f dist/index.html
+          ls dist/assets/*.js >/dev/null
+          ls dist/assets/*.css >/dev/null
