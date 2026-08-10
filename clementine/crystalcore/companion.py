@@ -106,6 +106,9 @@ class Clementine:
         self.max_recent_turns = max_recent_turns
         self.embed_model = embed_model
         self._embed_ok = None  # None=untested, True/False once known this session
+        # Why it stopped, in words, so the human can be told which of the
+        # three causes it was rather than just that something is off.
+        self._embed_reason = ""
         self.personality = Personality()
         self.memory = Memory()
 
@@ -319,8 +322,11 @@ class Clementine:
         """Return an embedding vector via Ollama, or None if unavailable.
 
         Embeddings send the text of memories, so they pass the same gate as
-        conversation. A refusal here is not fatal: recall falls back to the
-        keyword path rather than failing the whole turn.
+        conversation. Failure here is not fatal to the turn — but it is not
+        free either, and the old docstring described a fallback this code
+        does not have. There is no keyword path. Without embeddings,
+        _memory_block sends *every* memory instead of the most relevant
+        ones, which degrades as the relationship grows. See recall_notice().
         """
         if self._embed_ok is False:
             return None
@@ -329,6 +335,7 @@ class Clementine:
                                       model=self.embed_model, chars=len(text)))
         except ConsentRefused:
             self._embed_ok = False
+            self._embed_reason = "the consent gate refused the embedding call"
             return None
         try:
             r = requests.post(self.embed_endpoint,
@@ -338,12 +345,48 @@ class Clementine:
             emb = r.json().get("embedding")
         except requests.exceptions.RequestException:
             self._embed_ok = False
+            self._embed_reason = (f"the embedding model could not be reached "
+                                  f"at {destination_of(self.embed_endpoint)}")
             return None
         if not emb:
             self._embed_ok = False
+            self._embed_reason = (f"the embedding model '{self.embed_model}' "
+                                  f"returned nothing — it may not be pulled")
             return None
         self._embed_ok = True
+        self._embed_reason = ""
         return emb
+
+    @property
+    def recall_degraded(self) -> bool:
+        """True when recall has quietly stopped choosing.
+
+        Deliberately not simply "embeddings are off". Below MAX_MEMORIES the
+        whole store is sent anyway, so their absence changes nothing and
+        saying so would be noise. Above it, the difference is real: the
+        most relevant memories should be chosen and instead everything is
+        sent — and it worsens with every memory added.
+        """
+        if self._embed_ok is not False:
+            return False
+        return len(self.memory.facts) + len(self.memory.notes) > MAX_MEMORIES
+
+    def recall_notice(self) -> str:
+        """One sentence for the human, or "" when there is nothing to say.
+
+        Said plainly rather than hidden in a health endpoint nobody reads.
+        A companion that starts recalling worse and does not mention it is
+        behaving differently while implying it is not, which is the one
+        thing this project is built to refuse.
+        """
+        if not self.recall_degraded:
+            return ""
+        total = len(self.memory.facts) + len(self.memory.notes)
+        because = self._embed_reason or "embeddings are unavailable"
+        return (f"[Recall is degraded: {because}. All {total} memories are "
+                f"being sent instead of the {MAX_MEMORIES} most relevant, so "
+                f"replies may feel less focused. Fix: "
+                f"`ollama pull {self.embed_model}`.]")
 
     def _ensure_embeddings(self):
         """Backfill embeddings for any facts/notes that lack them, so older

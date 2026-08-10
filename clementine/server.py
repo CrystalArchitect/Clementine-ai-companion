@@ -184,6 +184,11 @@ def create_app(companion: Clementine) -> Flask:
             "endpoint": c.endpoint,
             "wire_model": c.wire_model,
             "embeddings": c._embed_ok,
+            # Not the same question as "are embeddings on". This is whether
+            # recall has actually stopped choosing — which only bites once
+            # there are more memories than fit in a prompt.
+            "recall_degraded": c.recall_degraded,
+            "recall_notice": c.recall_notice(),
             "audit_entries": len(c.audit.entries()) if c.audit else 0,
         })
 

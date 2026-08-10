@@ -109,6 +109,7 @@ def main():
               "or just /pronouns to let them choose their own.")
     print()
 
+    said_recall_notice = False
     while True:
         try:
             user_input = input("You: ").strip()
@@ -117,6 +118,14 @@ def main():
             break
         if not user_input:
             continue
+
+        # Said once, the first time recall actually degrades. Repeating it
+        # every turn would train the human to ignore it.
+        if not said_recall_notice:
+            notice = companion.recall_notice()
+            if notice:
+                print(notice + "\n")
+                said_recall_notice = True
 
         if user_input.lower() in ("/exit", "exit", "quit"):
             break
