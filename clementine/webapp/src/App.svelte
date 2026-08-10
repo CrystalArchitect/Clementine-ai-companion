@@ -1,7 +1,14 @@
 <script>
   import Avatar from './lib/Avatar.svelte';
   import Chat from './lib/Chat.svelte';
+  import Memory from './lib/Memory.svelte';
   import Senses from './lib/Senses.svelte';
+
+  // One button and one drawer, deliberately. The window has had no structure
+  // at all until now, and the first thing added should be the smallest thing
+  // that reaches the memory — not a navigation system built for surfaces
+  // that do not exist yet.
+  let memoryOpen = $state(false);
 
   let presence = $state('idle'); // idle | thinking | speaking
   let name = $state('Clementine');
@@ -71,8 +78,16 @@
     {#if auditIntact === false}
       <span class="chip down" title="An entry was altered or removed after being written.">record broken</span>
     {/if}
+    <button
+      class="memory"
+      onclick={() => (memoryOpen = true)}
+      title="See everything they hold about you, and take any of it back">
+      memory
+    </button>
   </div>
 </header>
+
+<Memory open={memoryOpen} onClose={() => (memoryOpen = false)} />
 
 <main>
   <aside class="presence">
@@ -161,6 +176,20 @@
     font-size: 0.72rem;
     padding: 3px 10px;
     cursor: pointer;
+  }
+  /* Shaped like the chips beside it rather than announced as a new region.
+     It reaches something that already existed and was simply unreachable. */
+  .memory {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    color: var(--purple);
+    font-size: 0.72rem;
+    padding: 3px 11px;
+    cursor: pointer;
+  }
+  .memory:hover {
+    border-color: rgba(167, 139, 250, 0.45);
   }
 
   main {
