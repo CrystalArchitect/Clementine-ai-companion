@@ -305,6 +305,13 @@ def test_api_md_names_every_route():
 
 def test_discovery_routes_do_not_require_json(client):
     """Discovery has to work from a bare `curl` with no headers set — that
-    is the entire point of it."""
-    for path in ("/", "/api", "/api/openapi.json"):
+    is the entire point of it.
+
+    `/` is not in this list, unlike in the fork this came from. There it was
+    the index and always answered 200; here it serves the built interface,
+    so it answers 503 when webapp/dist has not been built. Asserting 200 on
+    it would make this test pass or fail depending on whether someone had
+    run `npm run build` — which is not a fact about the API.
+    """
+    for path in ("/api", "/api/openapi.json"):
         assert client.get(path).status_code == 200, path
