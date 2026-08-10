@@ -87,6 +87,9 @@ ROUTES: tuple[Route, ...] = (
             "profile": "active profile name ('default' if unnamed)",
             "human_name": "what they call you, may be empty",
             "last_seen": "human phrase, e.g. 'two days ago'",
+            "gender": "'male', 'female', 'they', or '' for undecided",
+            "pronouns": "'he/him', 'she/her', 'they/them', or '' when undecided",
+            "gender_self_chosen": "true if they chose their own pronouns",
         },
     ),
     Route(
@@ -233,16 +236,23 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/profile/meta",
-        summary="Edit the active profile: avatar, description, model, or let them "
-                "choose their own name.",
+        summary="Edit the active profile: avatar, description, model, pronouns, "
+                "or let them choose their own name or pronouns.",
         request={"avatar": "single emoji, truncated to 8 chars",
                  "description": "truncated to 200 chars",
                  "model": "model tag to switch to",
-                 "choose_name": "true to have them pick a name for themselves"},
+                 "gender": "'male', 'female' or 'they'; '' or 'none' returns "
+                           "it to undecided",
+                 "choose_name": "true to have them pick a name for themselves",
+                 "choose_gender": "true to have them pick their own pronouns"},
         response={"ok": "true or false",
                   "name": "present only when choose_name was set and succeeded",
-                  "error": "present when they could not settle on a name"},
-        errors={415: "Content-Type was not application/json"},
+                  "gender": "present only when choose_gender was set and succeeded",
+                  "pronouns": "the pair for that gender, alongside it",
+                  "error": "present when they could not settle on one, or when "
+                           "an unrecognised gender was sent"},
+        errors={400: "gender was a value this does not understand",
+                415: "Content-Type was not application/json"},
         mutates=True,
     ),
     Route(
