@@ -10,5 +10,6 @@
 	],
 	"/docs/[slug]": [
 		"src/routes/docs/[slug]/+page.js"
-	]
+	],
+	"/ledger": []
 }
