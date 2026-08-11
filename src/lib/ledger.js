@@ -44,14 +44,14 @@ export const entries = [
     place: 'Ingleburn, South-Western Sydney',
     platform: 'YouTube',
     colour: 'var(--pink)',
-    url: null,
-    youtubeId: null,
-    verified: false,
+    url: 'https://www.youtube.com/watch?v=Gd5IXCDHpdY',
+    youtubeId: 'Gd5IXCDHpdY',
+    verified: true,
     body: `A live vocal and acoustic performance in South-Western Sydney, uploaded to a
       YouTube account that is no longer under my control. Working a room by ear — reading
       how a held note lands, where a phrase wants to breathe — is the same instinct that
-      later went into rhythm and pacing in the Codex. The performance is real; the link is
-      not yet confirmed, and it stays marked that way until it is.`
+      later went into rhythm and pacing in the Codex. I no longer hold the keys to the
+      account it sits on. I am claiming it here rather than pretending it isn't mine.`
   },
   {
     id: 'tiktok-fragments',

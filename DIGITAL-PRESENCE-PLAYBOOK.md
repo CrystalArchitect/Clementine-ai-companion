@@ -56,14 +56,17 @@ Design decisions worth keeping if the page is rewritten:
 - **Every entry carries its own prose**, so the page still says something true if
   a video is later deleted by whoever holds the account.
 
-### Filling in the Ingleburn entry
+### The Ingleburn entry — confirmed
 
-`src/lib/ledger.js` has the entry stubbed with `youtubeId: null` and
-`verified: false`. To publish it:
+Confirmed 2026-08-11. `youtubeId: 'Gd5IXCDHpdY'`, canonical watch page
+`https://www.youtube.com/watch?v=Gd5IXCDHpdY`, `verified: true`. The share link
+it came from carried a `?si=` tracking parameter; the stored URL is the clean
+canonical form.
 
-1. Find the video and copy the eleven-character id from the URL.
-2. Set `youtubeId`, set `url` to the canonical watch page, set `verified: true`.
-3. Nothing renders as evidence until step 2 is done — that is deliberate.
+The remaining entries are still unconfirmed and render no embed and no outbound
+link. To confirm one, copy the eleven-character id from its URL, set `youtubeId`
+and `url`, then set `verified: true`. Nothing renders as evidence until that last
+step — that is deliberate.
 
 Two caveats on embedding a video on a channel you do not control:
 
@@ -82,9 +85,8 @@ Draft for `@M13CrystalAT`. Each post is inside the 280-character limit. Post 3
 is the one that does the actual work — it is where the old account gets claimed
 by an account that is verifiably mine.
 
-> **Do not post this with the Ingleburn link until the link is confirmed.** If
-> the URL is not yet in hand, post 1, 2 and 4 stand on their own; add 3 later as
-> a reply, and the thread stays honest.
+The Ingleburn link is confirmed, so post 3 goes in the thread as written rather
+than as a later reply.
 
 **1/**
 
@@ -109,7 +111,7 @@ by an account that is verifiably mine.
 > Claiming it here rather than pretending it isn't mine. Same person, different
 > instrument.
 >
-> [LINK]
+> https://www.youtube.com/watch?v=Gd5IXCDHpdY
 
 **4/**
 
@@ -205,10 +207,12 @@ with control rather than with a request.
 ## 4. Order of operations
 
 1. Attempt recovery (section 0). An hour, once.
-2. Publish `/ledger` with only confirmed entries rendering as evidence.
-3. Confirm the Ingleburn link; flip `verified` to `true`; then post the thread
-   with post 3 intact.
-4. Only then decide, per clip, whether anything belongs in section 3.
+2. ~~Confirm the Ingleburn link and flip `verified` to `true`.~~ Done
+   2026-08-11.
+3. Publish `/ledger` — only the Ingleburn entry renders as evidence; the other
+   two stay marked unconfirmed until their links are in hand.
+4. Post the thread with post 3 intact, and pin it.
+5. Only then decide, per clip, whether anything belongs in section 3.
 
 ---
 
