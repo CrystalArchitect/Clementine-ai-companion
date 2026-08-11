@@ -29,7 +29,7 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/apocryphon" | "/clementine" | "/codex" | "/docs" | "/docs/[slug]";
+		RouteId(): "/" | "/apocryphon" | "/clementine" | "/codex" | "/docs" | "/docs/[slug]" | "/ledger";
 		RouteParams(): {
 			"/docs/[slug]": { slug: string }
 		};
@@ -39,9 +39,10 @@ declare module "$app/types" {
 			"/clementine": Record<string, never>;
 			"/codex": Record<string, never>;
 			"/docs": { slug?: string | undefined };
-			"/docs/[slug]": { slug: string }
+			"/docs/[slug]": { slug: string };
+			"/ledger": Record<string, never>
 		};
-		Pathname(): "/" | "/apocryphon" | "/clementine" | "/codex" | "/docs" | `/docs/${string}` & {} | `/docs/${string}/` & {};
+		Pathname(): "/" | "/apocryphon" | "/clementine" | "/codex" | "/docs" | `/docs/${string}` & {} | `/docs/${string}/` & {} | "/ledger";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
 		Asset(): "/assets/codex-cover.jpeg" | "/favicon.svg" | string & {};
 	}
