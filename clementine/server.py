@@ -242,13 +242,19 @@ def create_app(companion: Clementine) -> Flask:
     @app.get("/api/memories")
     def memories():
         c = holder["c"]
+        # Stable identifiers, not row numbers. A client reads this list, shows
+        # it to somebody, and acts on it a moment later — by which time a
+        # position may mean a different memory, while an identifier still
+        # means the one it was read from. `number` comes along for interfaces
+        # that want to print the same n1, n2 the terminal does.
         facts = [{"handle": k, "text": f"{k}: {v['value']}",
                   "tags": v.get("tags") or []}
                  for k, v in c.memory.facts.items()]
-        notes = [{"handle": f"n{i}", "text": n["text"],
-                  "tags": n.get("tags") or []}
+        notes = [{"handle": n.get("id") or f"n{i}", "number": f"n{i}",
+                  "text": n["text"], "tags": n.get("tags") or []}
                  for i, n in enumerate(c.memory.notes, 1)]
-        reflections = [{"handle": f"r{i}", "text": r["text"], "tags": []}
+        reflections = [{"handle": r.get("id") or f"r{i}", "number": f"r{i}",
+                        "text": r["text"], "tags": []}
                        for i, r in enumerate(c.memory.reflections, 1)]
         return jsonify({"facts": facts, "notes": notes,
                         "reflections": reflections})

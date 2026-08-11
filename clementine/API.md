@@ -66,7 +66,7 @@ own commit, with the client updated in the same breath.
 | · | `GET /api/memories` | Everything they currently hold about you. |
 | ✎ | `POST /api/reflect` | Ask them to look back over what they hold and draw something out. |
 | ✎ | `POST /api/teach` | Tell them something to keep. |
-| ✎ | `POST /api/forget` | Remove one memory by its handle. |
+| ✎ | `POST /api/forget` | Remove one memory by its handle. Immediate and permanent. |
 | · | `GET /api/export` | The whole relationship as one downloadable file. |
 | ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's memory. |
 | · | `GET /api/profile` | Which profile is active, and what others exist. |
@@ -232,9 +232,11 @@ Everything they currently hold about you.
 
 | field | meaning |
 |---|---|
-| `facts` | list of {handle, text, tags} — things told directly |
-| `notes` | list of {handle, text, tags} — things noticed |
-| `reflections` | list of {handle, text, tags} — things concluded |
+| `facts` | list of {handle, text, tags} — things told directly; a fact's handle is its key |
+| `notes` | list of {handle, number, text, tags} — things noticed |
+| `reflections` | list of {handle, number, text, tags} — things concluded |
+| `(handle)` | a stable identifier that keeps meaning the same memory; pass it to /api/forget |
+| `(number)` | the same memory's position, as the terminal prints it (n1, r1). Display only — it changes when an earlier memory is forgotten |
 
 
 ---
@@ -287,13 +289,13 @@ Tell them something to keep.
 
 ### `POST /api/forget`
 
-Remove one memory by its handle.
+Remove one memory by its handle. Immediate and permanent.
 
 **Send**
 
 | field | meaning |
 |---|---|
-| `handle` | handle from /api/memories |
+| `handle` | a handle from /api/memories — a fact's key, or a note or reflection's stable identifier. The positional form (n1, r1) is still accepted, and is only as current as the listing it came from |
 
 **Get back**
 
