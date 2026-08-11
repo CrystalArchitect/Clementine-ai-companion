@@ -81,10 +81,16 @@ both are format-level and neither is a UI question:
   guards were kept but are no longer load-bearing — the entry is left here
   struck through rather than deleted, because a register that erases the
   problems it solved cannot show what it cost to solve them.
-- **An anchor outside the audit file.** The hash chain catches alteration,
-  mid-file removal and reordering, but not entries cut from the end — a
-  truncated chain verifies perfectly. The record panel says so plainly, which
-  is honest but not the same as fixed.
+- ~~**An anchor outside the audit file.**~~ **Re-scoped and largely closed,
+  11 August 2026.** The item was misnamed: an anchor *outside the machine*
+  would mean publishing the log's head, which is a network call the human
+  never chose and leaks that they use this and how often — the thing the gate
+  exists to refuse. An anchor stored locally is no better, since whoever can
+  truncate the log can edit a sidecar too. So the anchor is the person's own
+  backup: every export now carries the record's length and its last hash, and
+  any later log can be checked against it. It closes the hole as far back as
+  the last backup and no further, and that boundary is stated wherever the
+  answer is shown rather than left to be discovered.
 
 ### The original finding, as written on 10 August 2026
 

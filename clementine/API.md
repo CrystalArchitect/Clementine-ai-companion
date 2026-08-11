@@ -327,6 +327,7 @@ The whole relationship as one downloadable file.
 | `exported_at` | ISO 8601, to the second |
 | `config` | their personality |
 | `memory` | everything they hold |
+| `audit` | {head, count} — a fingerprint of the consent record as it stood, not the record itself. Lets this file later attest that entries have not been removed from the end of it, which the chain cannot notice about itself. Absent when auditing is off |
 
 
 ---

@@ -32,6 +32,7 @@
   let problem = $state('');
   let working = $state(false);
   let done = $state(null);      // {name, replaced_backup} after a restore
+  let witness = $state(null);   // {ok, sentence} — what the file attests to
 
   const counts = $derived(summarise(file));
 
@@ -47,8 +48,56 @@
       problem = '';
       done = null;
       working = false;
+      witness = null;
     }
   });
+
+  /**
+   * Ask the file what it remembers about the consent record, and check.
+   *
+   * The chain in audit.jsonl cannot notice entries removed from its own end
+   * — a truncated chain verifies perfectly. A backup taken earlier can,
+   * because it wrote down where the record stood at the time. This is that
+   * check, and it is offered whether or not the person goes on to restore:
+   * asking a backup whether the record still agrees with it is a reason to
+   * open one on its own.
+   *
+   * What it cannot do is stated wherever the answer is shown. It witnesses
+   * up to the moment the backup was taken and is silent about everything
+   * after, so entries added since and then removed leave no trace here
+   * either.
+   */
+  async function askTheWitness(bundle) {
+    const w = bundle?.audit;
+    if (!w?.head || !w?.count) {
+      witness = { ok: null, sentence:
+        'This backup was taken before any calls were recorded, or by a ' +
+        'version that did not note them, so it has nothing to attest to.' };
+      return;
+    }
+    try {
+      const record = await (await fetch('/api/audit')).json();
+      const hashes = (record.entries ?? []).map((e) => e.hash);
+      const at = hashes.indexOf(w.head) + 1;
+      if (at === 0) {
+        witness = { ok: false, sentence:
+          `The entry this backup witnessed is no longer in the record. It ` +
+          `saw ${w.count} calls, and the last of them is gone.` };
+      } else if (at !== w.count) {
+        witness = { ok: false, sentence:
+          `This backup saw that call as number ${w.count}; it is now number ` +
+          `${at}. ${Math.abs(w.count - at)} entries have been ` +
+          `${at < w.count ? 'removed from' : 'inserted into'} the record ` +
+          `before it.` };
+      } else {
+        witness = { ok: true, sentence:
+          `The record still agrees with this backup: the ${w.count} calls it ` +
+          `witnessed are all present, in the same order.` };
+      }
+    } catch {
+      witness = null;
+    }
+  }
 
   function summarise(bundle) {
     const m = bundle?.memory ?? {};
@@ -100,6 +149,7 @@
       const why = unusable(parsed);
       if (why) { problem = why; return; }
       file = parsed;
+      askTheWitness(parsed);
     } catch {
       problem = 'That file could not be read as JSON. If it was downloaded, it may have arrived incomplete.';
     }
@@ -169,6 +219,23 @@
 
     {#if problem}
       <p class="problem" role="alert">{problem}</p>
+    {/if}
+
+    {#if witness}
+      <!-- Shown before the restore controls, because it is worth reading even
+           if the person never restores: it is the only way to notice entries
+           taken off the end of the record. -->
+      <div class="witness" class:broken={witness.ok === false}
+           class:fine={witness.ok === true} role="status">
+        <h3>What this backup says about your consent record</h3>
+        <p>{witness.sentence}</p>
+        <p class="bound">
+          A backup can only vouch for the record as it stood when the backup
+          was taken. Calls made since are outside what it saw, so if any of
+          those were removed, nothing here would show it. Take a backup more
+          often and the unwitnessed gap gets shorter; it never closes.
+        </p>
+      </div>
     {/if}
 
     {#if file}
@@ -256,6 +323,42 @@
     font-size: 0.8rem;
     line-height: 1.5;
     text-wrap: pretty;
+  }
+
+  .witness {
+    margin-top: 18px;
+    padding: 11px 13px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: rgba(233, 235, 244, 0.04);
+  }
+  .witness.fine {
+    border-color: rgba(52, 211, 153, 0.25);
+    background: rgba(52, 211, 153, 0.07);
+  }
+  .witness.broken {
+    border-color: rgba(252, 165, 165, 0.35);
+    background: rgba(252, 165, 165, 0.08);
+  }
+  .witness p {
+    font-size: 0.81rem;
+    line-height: 1.55;
+    margin-top: 7px;
+    text-wrap: pretty;
+  }
+  .witness.fine p {
+    color: var(--green);
+  }
+  .witness.broken p {
+    color: #fca5a5;
+  }
+  /* The limit is the same size as the finding. A backup that can only see
+     part of the record should not be presented as though it saw all of it,
+     and shrinking this line would be a way of saying so without saying so. */
+  .witness p.bound,
+  .witness.fine p.bound,
+  .witness.broken p.bound {
+    color: var(--muted);
   }
 
   .preview {

@@ -231,6 +231,13 @@
       gate refuses to send anywhere is in it, so once it leaves that folder
       it is only as private as wherever you put it.
     </p>
+    <p class="plain">
+      It also notes where your consent record stood — how many calls, and the
+      last one's fingerprint, not the calls themselves. That lets this file
+      later tell you whether anything has been taken off the end of that
+      record, which the record cannot tell you about itself. It can only
+      vouch for what it saw, so a more recent backup witnesses more.
+    </p>
     <a class="download" href="/api/export" download>Download everything</a>
     <!-- Restoring is offered from here because this is where a person thinks
          about backups, but it is a button rather than part of the section:
