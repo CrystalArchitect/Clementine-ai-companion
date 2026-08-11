@@ -2,6 +2,7 @@
   import Avatar from './lib/Avatar.svelte';
   import Chat from './lib/Chat.svelte';
   import Memory from './lib/Memory.svelte';
+  import Record from './lib/Record.svelte';
   import Senses from './lib/Senses.svelte';
 
   // One button and one drawer, deliberately. The window has had no structure
@@ -9,6 +10,7 @@
   // that reaches the memory — not a navigation system built for surfaces
   // that do not exist yet.
   let memoryOpen = $state(false);
+  let recordOpen = $state(false);
 
   let presence = $state('idle'); // idle | thinking | speaking
   let name = $state('Clementine');
@@ -84,10 +86,17 @@
       title="See everything they hold about you, and take any of it back">
       memory
     </button>
+    <button
+      class="memory"
+      onclick={() => (recordOpen = true)}
+      title="Read every call they have made, allowed or refused">
+      record
+    </button>
   </div>
 </header>
 
 <Memory open={memoryOpen} onClose={() => (memoryOpen = false)} />
+<Record open={recordOpen} onClose={() => (recordOpen = false)} />
 
 <main>
   <aside class="presence">

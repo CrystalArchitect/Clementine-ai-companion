@@ -31,6 +31,8 @@
    * server, which is a change to the memory format and not this component's
    * to make.
    */
+  import Drawer from './Drawer.svelte';
+
   let { open = false, onClose = () => {} } = $props();
 
   let facts = $state([]);
@@ -149,29 +151,21 @@
   }
 </script>
 
-{#if open}
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="scrim" onclick={onClose}></div>
-  <aside class="drawer" aria-label="What they remember">
-    <header>
-      <div>
-        <b>What they remember</b>
-        <span class="count">
-          {#if loading}reading…{:else if failed}unavailable{:else}{total} in all{/if}
-        </span>
-      </div>
-      <button class="close" onclick={onClose} aria-label="Close">✕</button>
-    </header>
+<Drawer
+  {open}
+  {onClose}
+  title="What they remember"
+  status={loading ? 'reading…' : failed ? 'unavailable' : `${total} in all`}
+  note="Their memory is a folder on this machine. Forgetting is immediate
+        and cannot be undone.">
+  {#if warning}
+    <p class="warning" role="alert">{warning}</p>
+  {/if}
+  {#if said}
+    <p class="said" role="status">{said}</p>
+  {/if}
 
-    {#if warning}
-      <p class="warning" role="alert">{warning}</p>
-    {/if}
-    {#if said}
-      <p class="said" role="status">{said}</p>
-    {/if}
-
-    <div class="body">
-      {#if failed}
+  {#if failed}
         <p class="empty">
           Their memory could not be read. Is <code>server.py</code> still
           running?
@@ -181,40 +175,33 @@
           They hold nothing about you yet. What you tell them to remember
           will appear here, and you can take any of it back.
         </p>
-      {:else}
-        {#each [['Told to them', 'fact', facts], ['Noticed', 'note', notes], ['Concluded on their own', 'reflection', reflections]] as [label, kind, items] (kind)}
-          {#if items.length}
-            <h3>{label}</h3>
-            <ul>
-              {#each items as memory (memory.handle + memory.text)}
-                <li>
-                  <div class="text">
-                    {memory.text}
-                    {#if memory.tags?.length}
-                      <span class="tags">
-                        {#each memory.tags as tag (tag)}<em>#{tag}</em>{/each}
-                      </span>
-                    {/if}
-                  </div>
-                  <button
-                    class="forget"
-                    disabled={working}
-                    onclick={() => ask(kind, memory)}
-                    aria-label={`Forget: ${memory.text}`}>forget</button>
-                </li>
-              {/each}
-            </ul>
-          {/if}
-        {/each}
+  {:else}
+    {#each [['Told to them', 'fact', facts], ['Noticed', 'note', notes], ['Concluded on their own', 'reflection', reflections]] as [label, kind, items] (kind)}
+      {#if items.length}
+        <h3>{label}</h3>
+        <ul>
+          {#each items as memory (memory.handle + memory.text)}
+            <li>
+              <div class="text">
+                {memory.text}
+                {#if memory.tags?.length}
+                  <span class="tags">
+                    {#each memory.tags as tag (tag)}<em>#{tag}</em>{/each}
+                  </span>
+                {/if}
+              </div>
+              <button
+                class="forget"
+                disabled={working}
+                onclick={() => ask(kind, memory)}
+                aria-label={`Forget: ${memory.text}`}>forget</button>
+            </li>
+          {/each}
+        </ul>
       {/if}
-    </div>
-
-    <footer>
-      Their memory is a folder on this machine. Forgetting is immediate and
-      cannot be undone.
-    </footer>
-  </aside>
-{/if}
+    {/each}
+  {/if}
+</Drawer>
 
 {#if pending}
   <div class="scrim confirming"></div>
@@ -231,57 +218,14 @@
 {/if}
 
 <style>
-  .scrim {
+  /* The panel shell — scrim, header, scrolling body, footer — lives in
+     Drawer.svelte. What remains here is only what is particular to showing
+     memories and to destroying one. */
+  .scrim.confirming {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 4, 0.6);
-    z-index: 20;
-  }
-  .scrim.confirming {
     z-index: 40;
     background: rgba(0, 0, 4, 0.75);
-  }
-
-  .drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(440px, 100vw);
-    background: var(--panel);
-    border-left: 1px solid var(--line);
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-  }
-  .drawer > header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--line);
-  }
-  .drawer > header b {
-    color: var(--purple);
-  }
-  .count {
-    color: var(--muted);
-    font-size: 0.78rem;
-    margin-left: 8px;
-  }
-  .close {
-    background: transparent;
-    border: 0;
-    color: var(--muted);
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 4px 6px;
-  }
-
-  .body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 6px 18px 18px;
   }
   h3 {
     color: var(--muted);
@@ -351,7 +295,10 @@
   }
   .warning,
   .said {
-    margin: 12px 18px 0;
+    /* No horizontal margin: these used to sit outside the scrolling body and
+       needed to match its inset by hand. They are inside it now, and 18px of
+       their own would sit on top of the 18px it already provides. */
+    margin: 12px 0 0;
     padding: 9px 11px;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -367,14 +314,6 @@
     color: var(--green);
     background: rgba(52, 211, 153, 0.08);
     border: 1px solid rgba(52, 211, 153, 0.25);
-  }
-
-  .drawer > footer {
-    padding: 10px 18px;
-    border-top: 1px solid var(--line);
-    color: var(--muted);
-    font-size: 0.74rem;
-    line-height: 1.5;
   }
 
   .confirm {
@@ -429,9 +368,4 @@
     color: #fca5a5;
   }
 
-  @media (max-width: 760px) {
-    .drawer {
-      width: 100vw;
-    }
-  }
 </style>
