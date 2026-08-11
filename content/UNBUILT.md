@@ -19,8 +19,8 @@ Entries are removed when the thing is built, not when it is planned.
 
 ## 1. The interface a person opens reaches almost none of the companion
 
-**Status: largely closed. Opened at 4 of 14 on 10 August 2026; 9 of 14 as
-of 11 August 2026.**
+**Status: closed but for two conveniences. Opened at 4 of 14 on 10 August
+2026; 12 of 14 as of 11 August 2026.**
 
 > The ratio is no longer counted by hand. `tests/test_reachability.py`
 > measures it and fails when the set changes in either direction, because
@@ -32,19 +32,22 @@ of 11 August 2026.**
 
 The server declares **17 routes**. Setting aside the three that describe the
 service rather than provide it (`/api`, `/api/openapi.json`, and the static
-asset handler), **14 are functional. The webapp now calls 9.**
+asset handler), **14 are functional. The webapp now calls 12.**
 
 | Reachable from the interface | Reachable only over HTTP |
 |---|---|
 | `POST /api/chat/stream` | `POST /api/teach` |
 | `GET /api/status` | `POST /api/reflect` |
-| `GET /api/health` | `GET /api/profile` |
-| `GET /api/audit` — the whole record | `POST /api/profile` |
-| `GET /api/memories` | `POST /api/profile/delete` |
+| `GET /api/health` | |
+| `GET /api/audit` — the whole record | |
+| `GET /api/memories` | |
 | `POST /api/forget` | |
 | `GET /api/export` | |
 | `POST /api/import` | |
 | `POST /api/profile/meta` | |
+| `GET /api/profile` | |
+| `POST /api/profile` | |
+| `POST /api/profile/delete` | |
 
 The original entry, kept below unedited, argued that what was unreachable was
 "most of what the word *sovereign* is doing in this project". That is no
@@ -57,11 +60,15 @@ rather than let a shrinking number imply the rest is merely more of the same:
 
 - `teach` and `reflect` are conveniences. Both are already reachable by
   talking to the companion, which is what the window is for.
-- The three remaining `profile` routes — listing companions, switching
-  between them, deleting one — are genuine gaps, but they are about running
-  *several* companions rather than about the sovereignty of one. Deleting a
-  profile destroys a whole companion, so it should not be built with less
-  care than restoring one got.
+- ~~The three remaining `profile` routes.~~ **Built, 11 August 2026.**
+  Listing, going to a companion, beginning one, and deleting one. Deleting
+  did *not* get restore's copy-aside treatment, and that is the decision
+  worth recording: being replaced happens to somebody who did not ask for
+  it, so a copy is a kindness; being deleted is asked for, by name, so a
+  copy is a betrayal dressed as a safety feature. The backup is offered
+  before the fact — as a route, since a companion can only be exported while
+  you are with them and only deleted while you are not — and never taken
+  after.
 
 `import` was the last destructive operation and is now built, on an endpoint
 hardened first: it had answered `{"ok": true}` while replacing a companion

@@ -62,7 +62,7 @@ rather than carried forward from when it was first written.
   the verification is itself a script they can run.
 - Neither a name nor pronouns are assigned. Either the human or the companion
   may choose, and the record says which of them did.
-- **210 tests**, a number of them written by breaking the implementation first
+- **229 tests**, a number of them written by breaking the implementation first
   to confirm they would catch it.
 
 ---
@@ -80,15 +80,14 @@ opens. An enforced property only a developer can exercise is still enforced,
 and still more than a policy commitment — but it is not a finished product,
 and saying so cost nothing an accurate argument needed.
 
-**[V]** As of 11 August 2026 that gap is largely closed: **nine of fourteen**
-are reachable from the window. Seeing what is held, deleting a memory,
+**[V]** As of 11 August 2026 that gap is closed but for two conveniences:
+**twelve of fourteen** are reachable from the window. Seeing what is held, deleting a memory,
 leaving with everything, coming back from a file, reading the whole record,
 and settling a name and pronouns are all things a person who never opens a
 terminal can do.
 
-The five that remain are conveniences already reachable by talking (`teach`,
-`reflect`) and multi-companion management (listing, switching, deleting a
-profile) — not sovereignty properties. They are listed in `UNBUILT.md`.
+The two that remain — `teach` and `reflect` — are conveniences already
+reachable by talking to the companion, which is what the window is for.
 
 That ratio is produced by `tests/test_reachability.py` rather than counted by
 hand, because counting it by hand got it wrong twice: once low, and once high
@@ -106,9 +105,11 @@ and it stays there. What follows is what *this* document does not claim.
 
 - **Nothing about grid capacity, planning, or energy policy.** That is the
   surveyed half, and it is not here precisely because it is not verified.
-- **Not that the interface is finished.** Five capabilities have no interface,
-  and one of them — deleting a whole companion — should not get one with less
-  care than restoring one received.
+- **Not that the interface is finished.** Two capabilities have no interface,
+  though both are reachable by talking. Deleting a companion now has one, and
+  deliberately keeps nothing: a copy of somebody asked to be destroyed would
+  be a betrayal dressed as a safety feature, so the backup is offered before
+  the fact and never taken after.
 - **Not that the audit log proves completeness, though it now proves more of
   it.** The hash chain catches an entry altered after writing, an entry cut
   from the middle, and reordering. It cannot catch entries removed from the
@@ -150,6 +151,7 @@ rather than ageing quietly:
 | memory handles keep meaning one memory | `tests/test_memory_identity.py` |
 | what the audit chain does and does not catch | `tests/test_audit_visibility.py` |
 | what a backup can and cannot witness | `tests/test_audit_witness.py` |
+| deleting a companion keeps nothing | `tests/test_companions.py` |
 | a damaged backup cannot empty a companion | `tests/test_import_safety.py` |
 | the reachability ratio | `tests/test_reachability.py` |
 

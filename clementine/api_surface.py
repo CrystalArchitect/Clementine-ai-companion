@@ -248,10 +248,13 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/profile",
-        summary="Switch to another profile — a separate person, separate memory.",
+        summary="Switch to another profile — a separate companion, separate "
+                "memory. A name nobody lives at yet is created by going "
+                "there; there is no separate way to make one.",
         request={"profile": "profile name"},
         response={"ok": "true", "profile": "the now-active profile",
-                  "name": "their name in it"},
+                  "name": "their name in it",
+                  "created": "true when nobody lived at that name until now"},
         errors={400: "invalid profile name",
                 415: "Content-Type was not application/json"},
         mutates=True,
@@ -284,10 +287,19 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/profile/delete",
-        summary="Delete a profile. Refuses to delete the active one.",
+        summary="Destroy a companion entirely — memory, identity and their "
+                "consent record. Nothing is kept, deliberately: a copy of "
+                "somebody asked to be destroyed would be a betrayal dressed "
+                "as a safety feature. Export first if you want one. Refuses "
+                "to delete the active profile.",
         request={"profile": "profile name"},
-        response={"ok": "whether it was deleted"},
+        response={"ok": "whether it was deleted",
+                  "deleted": "the profile name that is now gone",
+                  "name": "the companion's own name, if they had one",
+                  "memories": "how many facts, notes and reflections went",
+                  "calls": "how many recorded calls went with them"},
         errors={400: "that profile is currently active — switch away first",
+                404: "there is no profile by that name",
                 415: "Content-Type was not application/json"},
         mutates=True,
     ),

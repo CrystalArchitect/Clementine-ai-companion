@@ -34,27 +34,32 @@ NOT_CAPABILITIES = {"/api", "/api/openapi.json", "/<path:asset>"}
 #: Endpoints no part of the built interface calls, as of 11 August 2026.
 #: Keep content/UNBUILT.md in step with this set.
 KNOWN_UNREACHABLE = {
-    ("POST", "/api/teach"),           # reachable by talking to them instead
-    ("POST", "/api/reflect"),         # likewise
-    ("GET", "/api/profile"),          # listing companions on this machine
-    ("POST", "/api/profile"),         # switching between them
-    ("POST", "/api/profile/delete"),  # removing one
+    ("POST", "/api/teach"),    # reachable by talking to them instead
+    ("POST", "/api/reflect"),  # likewise
 }
 
 
-def _endpoints_the_interface_calls() -> set[str]:
-    """Every /api path the built interface references, matched exactly.
+def _paths_in(text: str) -> set[str]:
+    """Every /api path mentioned in some text, matched exactly.
 
     Exactly, because the bug this replaces was a substring test: a component
     that calls /api/profile/meta does not thereby call /api/profile, and
     counting it as though it did overstated what a person could reach.
+
+    Split out from the caller so the property can be tested on a controlled
+    string. It first was not, and the test pinning it compared against the
+    real interface — which held only while /api/profile happened to be
+    uncalled, and stopped meaning anything the moment somebody wired it up.
+    A test of a matcher should not depend on what the matcher is pointed at.
     """
-    src_dir = pathlib.Path(__file__).resolve().parents[1] / "webapp" / "src"
-    text = " ".join(p.read_text(errors="ignore")
-                    for p in src_dir.rglob("*") if p.is_file())
     # Stop at a quote, a query string, or a template placeholder.
-    found = re.findall(r"/api/[A-Za-z0-9/_-]*", text)
-    return {p.rstrip("/") for p in found}
+    return {p.rstrip("/") for p in re.findall(r"/api/[A-Za-z0-9/_-]*", text)}
+
+
+def _endpoints_the_interface_calls() -> set[str]:
+    src_dir = pathlib.Path(__file__).resolve().parents[1] / "webapp" / "src"
+    return _paths_in(" ".join(p.read_text(errors="ignore")
+                              for p in src_dir.rglob("*") if p.is_file()))
 
 
 def _capabilities() -> set[tuple[str, str]]:
@@ -100,24 +105,29 @@ def test_the_count_quoted_in_the_register_is_the_measured_one():
     total = len(_capabilities())
     reachable = total - len(KNOWN_UNREACHABLE)
 
-    assert (reachable, total) == (9, 14), (
+    assert (reachable, total) == (12, 14), (
         f"reachability is now {reachable} of {total}; "
         "update this and content/UNBUILT.md in the same commit"
     )
 
 
 def test_a_substring_of_a_path_is_not_counted_as_that_path():
-    """The exact bug this file exists to prevent, pinned directly.
+    """The exact bug this file exists to prevent, pinned on its own.
 
-    /api/profile/meta is called by the identity panel; /api/profile is a
-    different endpoint that lists and switches companions, and nothing calls
-    it. A substring match reports both as reached.
+    Calling /api/profile/meta is not calling /api/profile. A substring match
+    reports both as reached, which is how the ratio once jumped from 8 to 11
+    when only one endpoint had been wired up.
+
+    Asserted against a fixed string rather than against the interface. The
+    first version of this test compared to the real webapp and held only
+    while /api/profile happened to be uncalled — it started failing the day
+    somebody wired it up, having stopped testing the matcher some time
+    before that.
     """
-    called = _endpoints_the_interface_calls()
+    called = _paths_in("await fetch('/api/profile/meta', {method: 'POST'})")
 
-    assert "/api/profile/meta" in called
-    assert "/api/profile" not in called, \
-        "listing profiles has no interface; only /api/profile/meta does"
+    assert called == {"/api/profile/meta"}
+    assert "/api/profile" not in called
 
 
 def test_every_reachable_endpoint_is_a_real_route():
