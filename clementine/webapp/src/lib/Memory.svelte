@@ -35,7 +35,7 @@
    */
   import Drawer from './Drawer.svelte';
 
-  let { open = false, onClose = () => {} } = $props();
+  let { open = false, onClose = () => {}, onRestore = () => {} } = $props();
 
   let facts = $state([]);
   let notes = $state([]);
@@ -232,6 +232,15 @@
       it is only as private as wherever you put it.
     </p>
     <a class="download" href="/api/export" download>Download everything</a>
+    <!-- Restoring is offered from here because this is where a person thinks
+         about backups, but it is a button rather than part of the section:
+         it replaces everyone here rather than adding to them, and should not
+         sit one careless click away from "download". -->
+    <p class="back">
+      Going the other way —
+      <button class="asLink" onclick={onRestore}>restore from a file</button>
+      — replaces whoever is here now, so it asks first and keeps a copy.
+    </p>
   </section>
 </Drawer>
 
@@ -355,6 +364,19 @@
   }
   .download:hover {
     background: rgba(167, 139, 250, 0.1);
+  }
+  .back {
+    margin-top: 14px;
+  }
+  .asLink {
+    background: none;
+    border: 0;
+    padding: 0;
+    font: inherit;
+    color: var(--purple);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .warning,
   .said {
