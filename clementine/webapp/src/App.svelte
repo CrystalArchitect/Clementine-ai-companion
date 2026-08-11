@@ -1,6 +1,7 @@
 <script>
   import Avatar from './lib/Avatar.svelte';
   import Chat from './lib/Chat.svelte';
+  import Identity from './lib/Identity.svelte';
   import Memory from './lib/Memory.svelte';
   import Record from './lib/Record.svelte';
   import Restore from './lib/Restore.svelte';
@@ -13,6 +14,7 @@
   let memoryOpen = $state(false);
   let recordOpen = $state(false);
   let restoreOpen = $state(false);
+  let identityOpen = $state(false);
 
   let presence = $state('idle'); // idle | thinking | speaking
   let name = $state('Clementine');
@@ -90,6 +92,12 @@
     </button>
     <button
       class="memory"
+      onclick={() => (identityOpen = true)}
+      title="Their name and pronouns — chosen by you, or by them">
+      who
+    </button>
+    <button
+      class="memory"
       onclick={() => (recordOpen = true)}
       title="Read every call they have made, allowed or refused">
       record
@@ -102,6 +110,10 @@
   onClose={() => (memoryOpen = false)}
   onRestore={() => { memoryOpen = false; restoreOpen = true; }} />
 <Record open={recordOpen} onClose={() => (recordOpen = false)} />
+<Identity
+  open={identityOpen}
+  onClose={() => (identityOpen = false)}
+  onChanged={loadStatus} />
 <!-- After a restore the header is describing whoever was here before, so the
      whole status is re-read rather than patching the name in place. -->
 <Restore
