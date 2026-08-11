@@ -71,7 +71,7 @@ own commit, with the client updated in the same breath.
 | ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's companion and memory. The previous one is copied aside first, so this can be undone. |
 | · | `GET /api/profile` | Which profile is active, and what others exist. |
 | ✎ | `POST /api/profile` | Switch to another profile — a separate person, separate memory. |
-| ✎ | `POST /api/profile/meta` | Edit the active profile: avatar, description, model, pronouns, or let them choose their own name or pronouns. |
+| ✎ | `POST /api/profile/meta` | Edit the active profile: name, pronouns, avatar, description, model — or invite them to choose their own name or pronouns. Either party may decide the first two. |
 | ✎ | `POST /api/profile/delete` | Delete a profile. Refuses to delete the active one. |
 
 `✎` writes something — memory, model, or profile. Everything else only reads.
@@ -118,6 +118,7 @@ Who is running, on which model, from which profile.
 | field | meaning |
 |---|---|
 | `name` | their chosen name |
+| `name_self_chosen` | true if they chose their own name |
 | `avatar` | single emoji, may be empty |
 | `model` | the model tag currently answering |
 | `profile` | active profile name ('default' if unnamed) |
@@ -405,12 +406,14 @@ Switch to another profile — a separate person, separate memory.
 
 ### `POST /api/profile/meta`
 
-Edit the active profile: avatar, description, model, pronouns, or let them choose their own name or pronouns.
+Edit the active profile: name, pronouns, avatar, description, model — or invite them to choose their own name or pronouns. Either party may decide the first two.
 
 **Send**
 
 | field | meaning |
 |---|---|
+| `name` | what to call them; '' returns them to unnamed |
+| `human_name` | what they should call you, to 80 chars |
 | `avatar` | single emoji, truncated to 8 chars |
 | `description` | truncated to 200 chars |
 | `model` | model tag to switch to |

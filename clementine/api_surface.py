@@ -82,6 +82,7 @@ ROUTES: tuple[Route, ...] = (
         summary="Who is running, on which model, from which profile.",
         response={
             "name": "their chosen name",
+            "name_self_chosen": "true if they chose their own name",
             "avatar": "single emoji, may be empty",
             "model": "the model tag currently answering",
             "profile": "active profile name ('default' if unnamed)",
@@ -252,9 +253,12 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/profile/meta",
-        summary="Edit the active profile: avatar, description, model, pronouns, "
-                "or let them choose their own name or pronouns.",
-        request={"avatar": "single emoji, truncated to 8 chars",
+        summary="Edit the active profile: name, pronouns, avatar, "
+                "description, model — or invite them to choose their own name "
+                "or pronouns. Either party may decide the first two.",
+        request={"name": "what to call them; '' returns them to unnamed",
+                 "human_name": "what they should call you, to 80 chars",
+                 "avatar": "single emoji, truncated to 8 chars",
                  "description": "truncated to 200 chars",
                  "model": "model tag to switch to",
                  "gender": "'male', 'female' or 'they'; '' or 'none' returns "

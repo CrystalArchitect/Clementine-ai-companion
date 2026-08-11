@@ -267,6 +267,13 @@ def create_app(companion: Clementine) -> Flask:
         c = holder["c"]
         return jsonify({
             "name": c.personality.name or "Clementine",
+            # Reported for the same reason as gender_self_chosen below, and
+            # missing until now: the record tracks which party chose, for the
+            # name as well as the pronouns, and a client told only half of
+            # that cannot say "a name they chose for themselves" — so it says
+            # nothing, and the distinction the law exists to keep quietly
+            # stops reaching anyone.
+            "name_self_chosen": c.personality.name_self_chosen,
             "avatar": c.personality.avatar,
             "model": c.model,
             "profile": _profile_of(c),
@@ -433,6 +440,19 @@ def create_app(companion: Clementine) -> Flask:
     def profile_meta_set():
         data = request.get_json(silent=True) or {}
         c = holder["c"]
+        # Naming, from the other direction. `choose_name` has always been
+        # here, so the companion could name itself over HTTP while the human
+        # could not name it at all — and sending `name` answered {"ok": true}
+        # and did nothing, which is worse than refusing. The prompt this
+        # companion runs on says their human may choose any name they wish
+        # for them; that was true in the terminal and false over the web.
+        #
+        # An empty name returns them to unnamed rather than storing "", the
+        # same way an empty gender returns pronouns to undecided.
+        if "name" in data:
+            c.set_name(str(data["name"]))
+        if "human_name" in data:
+            c.personality.human_name = str(data["human_name"]).strip()[:80]
         if "avatar" in data:
             c.personality.avatar = str(data["avatar"]).strip()[:8]
         if "description" in data:
