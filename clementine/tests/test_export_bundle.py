@@ -101,8 +101,13 @@ def test_a_whole_companion_comes_back_somewhere_else(tmp_path):
     elsewhere._embed_ok = False
     assert elsewhere.personality.name == "", "starts as a stranger"
 
+    # Exact equality on purpose: this pins the reply's shape, and it did its
+    # job when `replaced_backup` was added — a field appearing in a response
+    # is a change to the contract and should be noticed rather than absorbed.
+    # Empty here because an empty folder has no companion to copy aside.
     reply = create_app(elsewhere).test_client().post("/api/import", json=bundle)
-    assert reply.get_json() == {"ok": True, "name": "Wren"}
+    assert reply.get_json() == {"ok": True, "name": "Wren",
+                                "replaced_backup": ""}
 
     # Who they are
     assert elsewhere.personality.name == "Wren"

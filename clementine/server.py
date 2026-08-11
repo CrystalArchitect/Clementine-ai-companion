@@ -46,6 +46,57 @@ def _profile_of(companion: Clementine) -> str:
     return p.name if p.parent == Path(_profiles.PROFILES_DIR) else "default"
 
 
+#: The containers a memory bundle's `memory` object may carry, and what each
+#: has to be. Only the shape is checked, never the contents: `load()` already
+#: ignores fields it does not know, so a bundle from a later version should
+#: still restore. The point is to refuse a file whose *structure* would leave
+#: the companion empty, not to police what a future version may add.
+_MEMORY_SHAPE = {"conversation": list, "summaries": list, "notes": list,
+                 "reflections": list, "facts": dict, "last_seen": str}
+
+
+def _unusable(bundle: dict) -> str:
+    """Why this bundle must not be written, or "" if it is safe to.
+
+    Checked before anything is overwritten, because the failure being
+    prevented is not a bad import — it is a bad import that reports success
+    while the companion it replaced is gone from everywhere the person looks.
+    """
+    for key in ("config", "memory"):
+        value = bundle.get(key)
+        if value is not None and not isinstance(value, dict):
+            return (f"the '{key}' section is {type(value).__name__}, not an "
+                    f"object — this file is damaged, and nothing was changed")
+    memory = bundle.get("memory") or {}
+    for field, wanted in _MEMORY_SHAPE.items():
+        if field in memory and not isinstance(memory[field], wanted):
+            return (f"'{field}' is {type(memory[field]).__name__} where it "
+                    f"should be {wanted.__name__} — this file is damaged, and "
+                    f"nothing was changed")
+    if not bundle.get("config") and not memory:
+        return ("this bundle carries neither a companion nor a memory, so "
+                "restoring it would only empty this one")
+    return ""
+
+
+def _keep_a_copy(memory_dir: Path) -> str:
+    """Copy the current config and memory aside before they are replaced.
+
+    Returns the folder they were put in, or "" when there was nothing to
+    keep — a first import into an empty profile has nothing to lose.
+    """
+    existing = [n for n in ("config.json", "memory.json")
+                if (memory_dir / n).exists()]
+    if not existing:
+        return ""
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    kept = memory_dir / f"replaced-{stamp}"
+    kept.mkdir(parents=True, exist_ok=True)
+    for name in existing:
+        (kept / name).write_bytes((memory_dir / name).read_bytes())
+    return str(kept)
+
+
 def create_app(companion: Clementine) -> Flask:
     app = Flask(__name__)
     holder = {"c": companion}  # swapped in place when the profile changes
@@ -313,22 +364,48 @@ def create_app(companion: Clementine) -> Flask:
         dataclasses here: load() is the tolerant path — unknown fields
         ignored, corrupt files preserved under .corrupt-* — and a bundle
         from a newer version deserves those same protections.
+
+        Everything before that write is about not destroying a companion on
+        the strength of a file nobody checked. This used to look at `format`
+        and `version` and nothing else, then write. A bundle that carried the
+        right two labels and a broken body — a truncated download, a
+        hand-edit, a future version's shape — replaced the person's companion
+        with an empty one and answered `{"ok": true}`. The old memory was
+        kept as a .corrupt-* file, so nothing was deleted, but the only
+        notice went to this server's stdout, which nobody running a browser
+        ever sees. Reporting success for that is the part that made it bad
+        rather than merely unlucky.
         """
         data = request.get_json(silent=True) or {}
         if (data.get("format") != "crystalcore-memory-bundle"
                 or data.get("version") != 1):
             return jsonify({"ok": False,
                             "error": "not a Clementine memory bundle"}), 400
+
+        problem = _unusable(data)
+        if problem:
+            return jsonify({"ok": False, "error": problem}), 400
+
         c = holder["c"]
         c.memory_dir.mkdir(parents=True, exist_ok=True)
+        # Keep what is here before replacing it. The .corrupt-* convention
+        # already says this project preserves rather than deletes; a restore
+        # is the one moment where a whole companion is overwritten at once,
+        # and it deserves the same courtesy. The path is returned so a person
+        # who imported the wrong file can be told where the old one went
+        # instead of having to know to look.
+        kept = _keep_a_copy(c.memory_dir)
         (c.memory_dir / "config.json").write_text(
             json.dumps(data.get("config") or {}, indent=2))
         (c.memory_dir / "memory.json").write_text(
             json.dumps(data.get("memory") or {}, indent=2))
         c.load()
         # The name comes back so the interface can confirm *who* arrived,
-        # not merely that something did.
-        return jsonify({"ok": True, "name": c.personality.name})
+        # not merely that something did. `kept` says where the previous
+        # companion went, which turns the one irreversible operation here
+        # into a reversible one.
+        return jsonify({"ok": True, "name": c.personality.name,
+                        "replaced_backup": kept})
 
     @app.get("/api/profile")
     def profile_get():

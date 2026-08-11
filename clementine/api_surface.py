@@ -215,13 +215,19 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/import",
-        summary="Restore from an exported bundle, replacing this profile's memory.",
+        summary="Restore from an exported bundle, replacing this profile's "
+                "companion and memory. The previous one is copied aside "
+                "first, so this can be undone.",
         request={"format": "must be 'crystalcore-memory-bundle'",
                  "version": "must be 1",
                  "config": "personality block from the export",
                  "memory": "memory block from the export"},
-        response={"ok": "true", "name": "their name after loading"},
-        errors={400: "not a Clementine memory bundle",
+        response={"ok": "true", "name": "their name after loading",
+                  "replaced_backup": "folder holding the companion that was "
+                                     "replaced, or empty when there was "
+                                     "nothing here to keep"},
+        errors={400: "not a Clementine memory bundle, or its structure is "
+                     "damaged — nothing is written in either case",
                 415: "Content-Type was not application/json"},
         mutates=True,
     ),

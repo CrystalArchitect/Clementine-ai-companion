@@ -68,7 +68,7 @@ own commit, with the client updated in the same breath.
 | ✎ | `POST /api/teach` | Tell them something to keep. |
 | ✎ | `POST /api/forget` | Remove one memory by its handle. Immediate and permanent. |
 | · | `GET /api/export` | The whole relationship as one downloadable file. |
-| ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's memory. |
+| ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's companion and memory. The previous one is copied aside first, so this can be undone. |
 | · | `GET /api/profile` | Which profile is active, and what others exist. |
 | ✎ | `POST /api/profile` | Switch to another profile — a separate person, separate memory. |
 | ✎ | `POST /api/profile/meta` | Edit the active profile: avatar, description, model, pronouns, or let them choose their own name or pronouns. |
@@ -332,7 +332,7 @@ The whole relationship as one downloadable file.
 
 ### `POST /api/import`
 
-Restore from an exported bundle, replacing this profile's memory.
+Restore from an exported bundle, replacing this profile's companion and memory. The previous one is copied aside first, so this can be undone.
 
 **Send**
 
@@ -349,12 +349,13 @@ Restore from an exported bundle, replacing this profile's memory.
 |---|---|
 | `ok` | true |
 | `name` | their name after loading |
+| `replaced_backup` | folder holding the companion that was replaced, or empty when there was nothing here to keep |
 
 **Errors**
 
 | code | when |
 |---|---|
-| `400` | not a Clementine memory bundle |
+| `400` | not a Clementine memory bundle, or its structure is damaged — nothing is written in either case |
 | `415` | Content-Type was not application/json |
 
 
