@@ -3,6 +3,7 @@
   import Chat from './lib/Chat.svelte';
   import Memory from './lib/Memory.svelte';
   import Record from './lib/Record.svelte';
+  import Restore from './lib/Restore.svelte';
   import Senses from './lib/Senses.svelte';
 
   // One button and one drawer, deliberately. The window has had no structure
@@ -11,6 +12,7 @@
   // that do not exist yet.
   let memoryOpen = $state(false);
   let recordOpen = $state(false);
+  let restoreOpen = $state(false);
 
   let presence = $state('idle'); // idle | thinking | speaking
   let name = $state('Clementine');
@@ -95,8 +97,17 @@
   </div>
 </header>
 
-<Memory open={memoryOpen} onClose={() => (memoryOpen = false)} />
+<Memory
+  open={memoryOpen}
+  onClose={() => (memoryOpen = false)}
+  onRestore={() => { memoryOpen = false; restoreOpen = true; }} />
 <Record open={recordOpen} onClose={() => (recordOpen = false)} />
+<!-- After a restore the header is describing whoever was here before, so the
+     whole status is re-read rather than patching the name in place. -->
+<Restore
+  open={restoreOpen}
+  currentName={name}
+  onClose={() => { restoreOpen = false; loadStatus(); }} />
 
 <main>
   <aside class="presence">
