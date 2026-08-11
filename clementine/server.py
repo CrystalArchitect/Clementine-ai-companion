@@ -55,6 +55,40 @@ _MEMORY_SHAPE = {"conversation": list, "summaries": list, "notes": list,
                  "reflections": list, "facts": dict, "last_seen": str}
 
 
+def _weight_of(name: str) -> dict:
+    """How much of a life a profile holds, read without loading it.
+
+    Used to say what a deletion will cost before it happens and what it cost
+    afterwards. Reading the files directly rather than constructing a
+    Clementine avoids the side effects of loading one — identifier
+    backfilling writes to disk, and counting a companion should not modify
+    them.
+    """
+    try:
+        folder = Path(profile_dir(name))
+    except ValueError:
+        return {"memories": 0, "calls": 0, "name": ""}
+
+    memories, calls, companion = 0, 0, ""
+    try:
+        data = json.loads((folder / "memory.json").read_text())
+        memories = (len(data.get("notes") or [])
+                    + len(data.get("facts") or {})
+                    + len(data.get("reflections") or []))
+    except (OSError, json.JSONDecodeError):
+        pass
+    try:
+        companion = json.loads((folder / "config.json").read_text()).get("name", "")
+    except (OSError, json.JSONDecodeError):
+        pass
+    try:
+        calls = sum(1 for line in
+                    (folder / "audit.jsonl").read_text().splitlines() if line.strip())
+    except OSError:
+        pass
+    return {"memories": memories, "calls": calls, "name": companion}
+
+
 def _unusable(bundle: dict) -> str:
     """Why this bundle must not be written, or "" if it is safe to.
 
@@ -507,11 +541,31 @@ def create_app(companion: Clementine) -> Flask:
 
     @app.post("/api/profile/delete")
     def profile_delete():
+        """Destroy a companion entirely. Nothing is kept, on purpose.
+
+        Import copies aside what it replaces, because replacing is something
+        that happens *to* somebody who did not ask for it. Deleting is the
+        opposite: it is asked for, specifically, about a named companion.
+        Quietly keeping a copy of one somebody asked to be destroyed would be
+        a betrayal dressed as a safety feature — and in a program whose whole
+        claim is that the person decides what is kept, the worst possible
+        place to make it.
+
+        So the interface offers a backup before the fact and takes none
+        after. What it does do is say exactly what is about to be lost, since
+        an accurate count is the thing that makes the choice a real one.
+        """
         name = ((request.get_json(silent=True) or {}).get("profile") or "").strip()
         if name == _profile_of(holder["c"]):
             return jsonify({"ok": False,
                             "error": "switch away before deleting the active profile"}), 400
-        return jsonify({"ok": delete_profile(name)})
+        # Counted before it goes, so the reply can say what was destroyed
+        # rather than only that something was.
+        lost = _weight_of(name)
+        if not delete_profile(name):
+            return jsonify({"ok": False,
+                            "error": f"there is no profile called '{name}'"}), 404
+        return jsonify({"ok": True, "deleted": name, **lost})
 
     @app.post("/api/profile")
     def profile_switch():
@@ -520,12 +574,24 @@ def create_app(companion: Clementine) -> Flask:
             target = profile_dir(name)
         except ValueError:
             return jsonify({"ok": False, "error": "invalid name"}), 400
+        # Whether anybody lives at this name yet. Asked before the switch,
+        # because switching is also how a companion is created — there is no
+        # separate "new" — and a person typing a name deserves to be told
+        # which of the two just happened.
+        arriving = not Path(target).exists()
+
         old = holder["c"]
+        # One line of insurance. Every path that changes memory saves as it
+        # goes, including chat_stream's finally, so no loss could be
+        # demonstrated here — but switching drops this object, and anything
+        # future that mutated without saving would vanish without a sound.
+        old.save()
         holder["c"] = Clementine(model=old.model, memory_dir=target,
                                  embed_model=old.embed_model)
         c = holder["c"]
         return jsonify({"ok": True, "profile": _profile_of(c),
-                        "name": c.personality.name or "Clementine"})
+                        "name": c.personality.name or "Clementine",
+                        "created": arriving})
 
     # ---------- the face, from the same address ----------
 

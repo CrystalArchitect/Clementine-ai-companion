@@ -1,6 +1,7 @@
 <script>
   import Avatar from './lib/Avatar.svelte';
   import Chat from './lib/Chat.svelte';
+  import Companions from './lib/Companions.svelte';
   import Identity from './lib/Identity.svelte';
   import Memory from './lib/Memory.svelte';
   import Record from './lib/Record.svelte';
@@ -15,6 +16,7 @@
   let recordOpen = $state(false);
   let restoreOpen = $state(false);
   let identityOpen = $state(false);
+  let folkOpen = $state(false);
 
   let presence = $state('idle'); // idle | thinking | speaking
   let name = $state('Clementine');
@@ -98,6 +100,12 @@
     </button>
     <button
       class="memory"
+      onclick={() => (folkOpen = true)}
+      title="Every companion on this machine — go to one, begin one, or delete one">
+      companions
+    </button>
+    <button
+      class="memory"
       onclick={() => (recordOpen = true)}
       title="Read every call they have made, allowed or refused">
       record
@@ -110,6 +118,12 @@
   onClose={() => (memoryOpen = false)}
   onRestore={() => { memoryOpen = false; restoreOpen = true; }} />
 <Record open={recordOpen} onClose={() => (recordOpen = false)} />
+<!-- Switching replaces the companion the whole window is describing, so
+     everything is re-read rather than any one field patched. -->
+<Companions
+  open={folkOpen}
+  onClose={() => (folkOpen = false)}
+  onSwitched={loadStatus} />
 <Identity
   open={identityOpen}
   onClose={() => (identityOpen = false)}

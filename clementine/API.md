@@ -70,9 +70,9 @@ own commit, with the client updated in the same breath.
 | · | `GET /api/export` | The whole relationship as one downloadable file. |
 | ✎ | `POST /api/import` | Restore from an exported bundle, replacing this profile's companion and memory. The previous one is copied aside first, so this can be undone. |
 | · | `GET /api/profile` | Which profile is active, and what others exist. |
-| ✎ | `POST /api/profile` | Switch to another profile — a separate person, separate memory. |
+| ✎ | `POST /api/profile` | Switch to another profile — a separate companion, separate memory. A name nobody lives at yet is created by going there; there is no separate way to make one. |
 | ✎ | `POST /api/profile/meta` | Edit the active profile: name, pronouns, avatar, description, model — or invite them to choose their own name or pronouns. Either party may decide the first two. |
-| ✎ | `POST /api/profile/delete` | Delete a profile. Refuses to delete the active one. |
+| ✎ | `POST /api/profile/delete` | Destroy a companion entirely — memory, identity and their consent record. Nothing is kept, deliberately: a copy of somebody asked to be destroyed would be a betrayal dressed as a safety feature. Export first if you want one. Refuses to delete the active profile. |
 
 `✎` writes something — memory, model, or profile. Everything else only reads.
 
@@ -379,7 +379,7 @@ Which profile is active, and what others exist.
 
 ### `POST /api/profile`
 
-Switch to another profile — a separate person, separate memory.
+Switch to another profile — a separate companion, separate memory. A name nobody lives at yet is created by going there; there is no separate way to make one.
 
 **Send**
 
@@ -394,6 +394,7 @@ Switch to another profile — a separate person, separate memory.
 | `ok` | true |
 | `profile` | the now-active profile |
 | `name` | their name in it |
+| `created` | true when nobody lived at that name until now |
 
 **Errors**
 
@@ -444,7 +445,7 @@ Edit the active profile: name, pronouns, avatar, description, model — or invit
 
 ### `POST /api/profile/delete`
 
-Delete a profile. Refuses to delete the active one.
+Destroy a companion entirely — memory, identity and their consent record. Nothing is kept, deliberately: a copy of somebody asked to be destroyed would be a betrayal dressed as a safety feature. Export first if you want one. Refuses to delete the active profile.
 
 **Send**
 
@@ -457,12 +458,17 @@ Delete a profile. Refuses to delete the active one.
 | field | meaning |
 |---|---|
 | `ok` | whether it was deleted |
+| `deleted` | the profile name that is now gone |
+| `name` | the companion's own name, if they had one |
+| `memories` | how many facts, notes and reflections went |
+| `calls` | how many recorded calls went with them |
 
 **Errors**
 
 | code | when |
 |---|---|
 | `400` | that profile is currently active — switch away first |
+| `404` | there is no profile by that name |
 | `415` | Content-Type was not application/json |
 
 
