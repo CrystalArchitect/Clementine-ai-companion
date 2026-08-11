@@ -166,15 +166,15 @@
   {/if}
 
   {#if failed}
-        <p class="empty">
-          Their memory could not be read. Is <code>server.py</code> still
-          running?
-        </p>
-      {:else if !loading && total === 0}
-        <p class="empty">
-          They hold nothing about you yet. What you tell them to remember
-          will appear here, and you can take any of it back.
-        </p>
+    <p class="empty">
+      Their memory could not be read. Is <code>server.py</code> still
+      running?
+    </p>
+  {:else if !loading && total === 0}
+    <p class="empty">
+      They hold nothing about you yet. What you tell them to remember
+      will appear here, and you can take any of it back.
+    </p>
   {:else}
     {#each [['Told to them', 'fact', facts], ['Noticed', 'note', notes], ['Concluded on their own', 'reflection', reflections]] as [label, kind, items] (kind)}
       {#if items.length}
@@ -201,6 +201,33 @@
       {/if}
     {/each}
   {/if}
+
+  <!--
+    Export sits here rather than behind a third button in the header. Taking
+    your memory with you is a thing you do *to* the memory, and a person
+    looking for it will look where the memory is.
+
+    A plain link, not a fetch: the server already sets the filename in
+    Content-Disposition, so an anchor gets the right name, streams straight
+    to disk, and works if the JavaScript ever does not.
+  -->
+  <section class="leaving">
+    <h3>Take it with you</h3>
+    <p>
+      One file with everything in it: what they remember, what they have
+      concluded, your conversations word for word, and who they are — their
+      name, their pronouns, how you asked them to speak. Enough to put this
+      companion back together somewhere else.
+    </p>
+    <p class="plain">
+      It is unencrypted JSON you can open in any text editor, which is the
+      point — nothing about you should need our software to be readable. It
+      also means the file protects nothing by itself. Everything the consent
+      gate refuses to send anywhere is in it, so once it leaves that folder
+      it is only as private as wherever you put it.
+    </p>
+    <a class="download" href="/api/export" download>Download everything</a>
+  </section>
 </Drawer>
 
 {#if pending}
@@ -292,6 +319,37 @@
     line-height: 1.6;
     padding: 22px 0;
     text-wrap: pretty;
+  }
+
+  .leaving {
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .leaving p {
+    color: var(--muted);
+    font-size: 0.79rem;
+    line-height: 1.55;
+    margin-top: 7px;
+    text-wrap: pretty;
+  }
+  /* The caveat is the same size as the offer. Shrinking it would be a way of
+     saying it without saying it. */
+  .leaving p.plain {
+    color: var(--muted);
+  }
+  .download {
+    display: inline-block;
+    margin-top: 13px;
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    border-radius: 999px;
+    color: var(--purple);
+    text-decoration: none;
+    font-size: 0.79rem;
+    padding: 6px 15px;
+  }
+  .download:hover {
+    background: rgba(167, 139, 250, 0.1);
   }
   .warning,
   .said {
