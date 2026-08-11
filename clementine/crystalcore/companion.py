@@ -15,6 +15,7 @@ promise the code can make on its own.
 import json
 import math
 import os
+import uuid
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -461,6 +462,7 @@ class Clementine:
         """Explicitly store something important, permanently."""
         text, tags = self._split_tags(text)
         self.memory.notes.append({
+            "id": self._new_id("n"),
             "text": text,
             "tags": tags,
             "when": datetime.now().isoformat(timespec="seconds"),
@@ -481,26 +483,34 @@ class Clementine:
         self.save()
 
     def forget(self, handle: str) -> str:
-        """Forget a fact by key, a note by number (n1, n2, ...), or one of
-        their own reflections (r1, r2, ...). Forgetting is the user's right;
-        it is immediate and permanent."""
-        handle = handle.strip()
+        """Forget a fact by key, or a note or reflection by handle.
+
+        A handle is either the memory's stable identifier or its number in
+        /notes. The identifier is preferred and tried first, because a number
+        is a position and positions move: deleting n2 used to make n3 mean
+        what n4 meant, so anything acting on a list it read a moment ago could
+        destroy a memory nobody chose. An identifier deletes the memory it
+        names or nothing at all.
+
+        The numbers still work, because a person reading a numbered list and
+        typing one of the numbers is the ordinary case and should not have to
+        copy a hex string. They are simply no longer the only way to be
+        precise.
+
+        Forgetting is the user's right; it is immediate and permanent.
+        """
+        handle = (handle or "").strip()
         if handle in self.memory.facts:
             del self.memory.facts[handle]
             self.save()
             return f"fact '{handle}'"
-        if handle.lower().startswith("n") and handle[1:].isdigit():
-            idx = int(handle[1:]) - 1
-            if 0 <= idx < len(self.memory.notes):
-                removed = self.memory.notes.pop(idx)
+        for store, prefix, noun in ((self.memory.notes, "n", "note"),
+                                    (self.memory.reflections, "r", "reflection")):
+            idx = self._find(store, handle, prefix)
+            if idx >= 0:
+                removed = store.pop(idx)
                 self.save()
-                return f"note '{removed['text']}'"
-        if handle.lower().startswith("r") and handle[1:].isdigit():
-            idx = int(handle[1:]) - 1
-            if 0 <= idx < len(self.memory.reflections):
-                removed = self.memory.reflections.pop(idx)
-                self.save()
-                return f"reflection '{removed['text']}'"
+                return f"{noun} '{removed['text']}'"
         return ""
 
     def reflect(self) -> str:
@@ -544,6 +554,7 @@ class Clementine:
             if len(text) > 3 and len(added) < 3:
                 added.append(text)
                 self.memory.reflections.append({
+                    "id": self._new_id("r"),
                     "text": text,
                     "when": datetime.now().isoformat(timespec="seconds"),
                     "embedding": self._embed(text),
@@ -554,20 +565,26 @@ class Clementine:
         return "I sat with it a while, but nothing new rose to the surface."
 
     def edit_note(self, handle: str, new_text: str) -> bool:
-        """Rewrite a note by its /notes number; refreshes embedding and time."""
-        if handle.lower().startswith("n") and handle[1:].isdigit():
-            idx = int(handle[1:]) - 1
-            if 0 <= idx < len(self.memory.notes):
-                text, tags = self._split_tags(new_text)
-                self.memory.notes[idx] = {
-                    "text": text,
-                    "tags": tags,
-                    "when": datetime.now().isoformat(timespec="seconds"),
-                    "embedding": self._embed(text),
-                }
-                self.save()
-                return True
-        return False
+        """Rewrite a note, by stable identifier or by its /notes number.
+
+        The identifier is carried across rather than regenerated. Rewording a
+        note is not replacing it with a different one — anything holding the
+        old handle still means this note, and it would be a strange kind of
+        permanence that survived everything except being corrected.
+        """
+        idx = self._find(self.memory.notes, handle, "n")
+        if idx < 0:
+            return False
+        text, tags = self._split_tags(new_text)
+        self.memory.notes[idx] = {
+            "id": self.memory.notes[idx].get("id") or self._new_id("n"),
+            "text": text,
+            "tags": tags,
+            "when": datetime.now().isoformat(timespec="seconds"),
+            "embedding": self._embed(text),
+        }
+        self.save()
+        return True
 
     def set_name(self, name: str, self_chosen: bool = False):
         self.personality.name = name.strip()
@@ -967,6 +984,77 @@ class Clementine:
             self.memory_dir / "config.json", Personality)
         self.memory = self._load_json(
             self.memory_dir / "memory.json", Memory)
+        if self._ensure_ids():
+            self.save()
+
+    # ---------- stable identity for a memory ----------
+
+    @staticmethod
+    def _new_id(prefix: str) -> str:
+        """A handle that means one memory and goes on meaning it.
+
+        Short and hex rather than a full UUID because this file is meant to
+        be opened and read by the person it belongs to, and a wall of
+        hyphenated identifiers makes that worse. Forty-eight bits is far more
+        than a personal memory store needs, and collisions are checked for
+        anyway when they are handed out.
+        """
+        return f"{prefix}-{uuid.uuid4().hex[:12]}"
+
+    def _ensure_ids(self) -> bool:
+        """Give every note and reflection a permanent handle. True if any
+        were missing.
+
+        Runs on load, which covers three cases with one piece of code:
+        companions that predate identifiers, memory hand-edited in a text
+        editor (the file invites that, so adding `{"text": "..."}` by hand
+        has to work), and a bundle imported from elsewhere.
+
+        Existing identifiers are never reassigned. Rewriting them on load
+        would break the one promise the identifier makes.
+        """
+        seen = set()
+        changed = False
+        for prefix, store in (("n", self.memory.notes),
+                              ("r", self.memory.reflections)):
+            for item in store:
+                if not isinstance(item, dict):
+                    continue
+                current = item.get("id")
+                if current and current not in seen:
+                    seen.add(current)
+                    continue
+                # Missing, or a duplicate of one already handed out — which a
+                # hand-copied entry produces, and which would make two
+                # memories answer to the same handle.
+                new = self._new_id(prefix)
+                while new in seen:
+                    new = self._new_id(prefix)
+                item["id"] = new
+                seen.add(new)
+                changed = True
+        return changed
+
+    def _find(self, store: list, handle: str, prefix: str):
+        """Resolve a handle to an index in `store`, or -1.
+
+        Two forms are accepted, and the order matters. A stable identifier is
+        tried first: it names one memory and cannot come to mean a different
+        one. The positional form (n1, n2) is still understood because it is
+        what /notes prints and what a person types after reading it, but it
+        is only ever as fresh as the listing it came from.
+        """
+        handle = (handle or "").strip()
+        if not handle:
+            return -1
+        for i, item in enumerate(store):
+            if isinstance(item, dict) and item.get("id") == handle:
+                return i
+        if handle.lower().startswith(prefix) and handle[1:].isdigit():
+            idx = int(handle[1:]) - 1
+            if 0 <= idx < len(store):
+                return idx
+        return -1
 
     @staticmethod
     def _load_json(path, cls):

@@ -157,9 +157,16 @@ ROUTES: tuple[Route, ...] = (
         path="/api/memories",
         summary="Everything they currently hold about you.",
         response={
-            "facts": "list of {handle, text, tags} — things told directly",
-            "notes": "list of {handle, text, tags} — things noticed",
-            "reflections": "list of {handle, text, tags} — things concluded",
+            "facts": "list of {handle, text, tags} — things told directly; "
+                     "a fact's handle is its key",
+            "notes": "list of {handle, number, text, tags} — things noticed",
+            "reflections": "list of {handle, number, text, tags} — things "
+                           "concluded",
+            "(handle)": "a stable identifier that keeps meaning the same "
+                        "memory; pass it to /api/forget",
+            "(number)": "the same memory's position, as the terminal prints "
+                        "it (n1, r1). Display only — it changes when an "
+                        "earlier memory is forgotten",
         },
     ),
     Route(
@@ -185,8 +192,11 @@ ROUTES: tuple[Route, ...] = (
     Route(
         method="POST",
         path="/api/forget",
-        summary="Remove one memory by its handle.",
-        request={"handle": "handle from /api/memories"},
+        summary="Remove one memory by its handle. Immediate and permanent.",
+        request={"handle": "a handle from /api/memories — a fact's key, or a "
+                           "note or reflection's stable identifier. The "
+                           "positional form (n1, r1) is still accepted, and "
+                           "is only as current as the listing it came from"},
         response={"ok": "whether anything matched",
                   "forgotten": "what was removed"},
         errors={415: "Content-Type was not application/json"},

@@ -7,29 +7,31 @@
    * no second chance — so the work here is mostly about not deleting the
    * wrong thing.
    *
-   * The hazard is specific and was measured, not guessed. Note and reflection
-   * handles are positions in a list: n1, n2, n3. Deleting n2 renumbers
-   * everything after it, so a list fetched a moment ago can already describe
-   * a different memory than the server does. Confirm against a stale list and
-   * the person permanently loses a memory they never chose. (Facts are keyed
-   * by name and do not move; only notes and reflections renumber.)
+   * The hazard these guards were built for has since been closed at the
+   * format level, and this note says so rather than implying they are still
+   * load-bearing. Handles used to be positions in a list — n1, n2, n3 — so
+   * deleting n2 renumbered everything after it and a list fetched a moment
+   * ago could already describe different memories than the server did.
+   * Confirming against a stale list permanently destroyed a memory nobody
+   * chose. Notes and reflections now carry identifiers that keep meaning the
+   * same memory, so `forget` removes what was named or nothing at all.
    *
-   * Three guards, none of which needed a new endpoint:
+   * The three guards stay, downgraded from necessary to cheap:
    *
    *   1. The confirmation names the memory in full, so the person is agreeing
-   *      to specific words rather than to a row position.
-   *   2. Immediately before deleting, the list is re-read and the handle is
-   *      checked to still mean the same words. This closes the window to the
-   *      length of one request instead of however long the panel sat open.
-   *   3. After deleting, the server says what it removed. That is compared
-   *      against what was agreed to, and any disagreement is reported loudly
-   *      rather than swallowed.
+   *      to specific words rather than to a row in a list. This was never
+   *      really about the handle, and is the one that still earns its place.
+   *   2. Immediately before deleting, the list is re-read and the handle
+   *      checked to still mean the same words. Now catches a memory already
+   *      forgotten in another tab, rather than a catastrophe.
+   *   3. After deleting, the server's report of what it removed is compared
+   *      against what was agreed to, and any disagreement is stated loudly.
+   *      With stable handles this should be unreachable, which is the best
+   *      reason to leave it in: if it ever fires, something is wrong that
+   *      nobody predicted, and the person is told rather than not.
    *
-   * Guard 3 cannot prevent a wrong deletion, only surface one. That is worth
-   * saying plainly: told what went, a person can put it back by hand, and
-   * told nothing they cannot. The durable fix is stable identifiers on the
-   * server, which is a change to the memory format and not this component's
-   * to make.
+   * Removing them would save a request and lose the ability to notice being
+   * wrong. That is a poor trade on the one screen here that destroys things.
    */
   import Drawer from './Drawer.svelte';
 
@@ -74,9 +76,12 @@
   /**
    * Does `handle` still mean these exact words on the server?
    *
-   * Facts are identified by their handle, which is the key itself and stable.
-   * Notes and reflections are identified by their text, because their handle
-   * is only a row number and is precisely the thing that cannot be trusted.
+   * Every handle is now stable — a fact's key, or a note or reflection's
+   * identifier — so finding it is enough to know the right memory is in
+   * hand. The text is still compared because a handle proves which memory
+   * and not what it currently says: a note reworded elsewhere since the
+   * panel was opened would otherwise be deleted on the strength of words it
+   * no longer holds, and the person deserves to re-read it first.
    */
   function stillMeans(fresh, item) {
     const group = fresh[item.kind === 'fact' ? 'facts'

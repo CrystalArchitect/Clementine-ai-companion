@@ -58,9 +58,14 @@ rather than let a shrinking number imply the rest is merely more of the same:
 Two follow-ups recorded elsewhere in conversation belong here too, because
 both are format-level and neither is a UI question:
 
-- **Stable memory identifiers.** Note and reflection handles are list
-  positions, so deleting one renumbers the rest. The interface compensates
-  with three guards; the durable fix is identifiers that do not move.
+- ~~**Stable memory identifiers.**~~ **Built, 11 August 2026.** Notes and
+  reflections now carry identifiers that keep meaning the same memory, and
+  `forget` removes what it was asked for or nothing at all. Companions that
+  predate them are migrated on load, hand-edited entries are given one, and
+  the numbered handles the terminal prints still work. The interface's three
+  guards were kept but are no longer load-bearing — the entry is left here
+  struck through rather than deleted, because a register that erases the
+  problems it solved cannot show what it cost to solve them.
 - **An anchor outside the audit file.** The hash chain catches alteration,
   mid-file removal and reordering, but not entries cut from the end — a
   truncated chain verifies perfectly. The record panel says so plainly, which
