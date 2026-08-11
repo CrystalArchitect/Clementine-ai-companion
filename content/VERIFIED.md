@@ -62,7 +62,7 @@ rather than carried forward from when it was first written.
   the verification is itself a script they can run.
 - Neither a name nor pronouns are assigned. Either the human or the companion
   may choose, and the record says which of them did.
-- **197 tests**, a number of them written by breaking the implementation first
+- **210 tests**, a number of them written by breaking the implementation first
   to confirm they would catch it.
 
 ---
@@ -109,11 +109,28 @@ and it stays there. What follows is what *this* document does not claim.
 - **Not that the interface is finished.** Five capabilities have no interface,
   and one of them — deleting a whole companion — should not get one with less
   care than restoring one received.
-- **Not that the audit log proves completeness.** The hash chain catches an
-  entry altered after writing, an entry cut from the middle, and reordering.
-  It does not catch entries removed from the *end*: a truncated chain verifies
-  perfectly. Closing that needs an anchor outside the file, which does not
-  exist yet. The interface says so where it reports the verdict.
+- **Not that the audit log proves completeness, though it now proves more of
+  it.** The hash chain catches an entry altered after writing, an entry cut
+  from the middle, and reordering. It cannot catch entries removed from the
+  *end*, because a truncated chain verifies perfectly and nothing inside a
+  file can prove what is missing from the end of it.
+
+  **[V]** Every export now carries a fingerprint of the record as it stood —
+  the number of calls and the last one's hash, not the calls themselves — so
+  a backup can later be asked whether the record still agrees with it. That
+  closes the hole **as far back as the last backup and no further**. Calls
+  made since are outside what any backup saw, so removing exactly those
+  leaves no trace. Backing up more often shortens the unwitnessed gap; it
+  never closes it. `tests/test_audit_witness.py` pins both the detection and
+  the limit, so the limit cannot be quietly overstated later.
+
+  This is deliberately not the usual fix. The usual fix is an anchor outside
+  the machine, and publishing the head anywhere is a network call the human
+  did not choose, leaking that they use this, how often, and when — the exact
+  thing the gate exists to refuse. An anchor stored locally would be no
+  better: whoever can truncate the log runs with the same privileges and can
+  edit a sidecar file too. So the anchor is the person's own backup, which
+  never leaves the machine and is held by them rather than by anybody else.
 - **Not that any of this generalises.** That it scales from a personal
   companion to institutional infrastructure is a bet, and bets are not in this
   file.
@@ -132,6 +149,7 @@ rather than ageing quietly:
 | either party may choose a name or pronouns | `tests/test_pronouns.py`, `tests/test_identity_surface.py` |
 | memory handles keep meaning one memory | `tests/test_memory_identity.py` |
 | what the audit chain does and does not catch | `tests/test_audit_visibility.py` |
+| what a backup can and cannot witness | `tests/test_audit_witness.py` |
 | a damaged backup cannot empty a companion | `tests/test_import_safety.py` |
 | the reachability ratio | `tests/test_reachability.py` |
 

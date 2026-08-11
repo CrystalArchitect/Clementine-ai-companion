@@ -106,6 +106,64 @@ class AuditLog:
 
         return (not problems), problems
 
+    # ---------- witnessing ----------
+    #
+    # verify() catches an entry altered after writing, an entry cut from the
+    # middle, and reordering. It cannot catch entries removed from the *end*:
+    # a chain with its tail cut off is a shorter chain that verifies
+    # perfectly. Nothing inside a file can prove what is missing from the
+    # end of it.
+    #
+    # The usual answer is an anchor outside the file — publish the head
+    # somewhere the machine cannot rewrite. Here that answer is worse than
+    # the problem: sending the head anywhere is a network call the human did
+    # not choose, and it leaks that they use this, how often, and when. The
+    # gate exists to refuse exactly that.
+    #
+    # So the anchor is the human's own backup. An export carries the head and
+    # the count at the moment it was taken, and any later log can be checked
+    # against it. It never leaves the machine, it sits in their hands rather
+    # than a third party's, and its limit is exact: it witnesses everything
+    # up to the backup and says nothing about what came after.
+
+    def witness(self) -> dict:
+        """What a backup taken now can testify to later."""
+        return {"head": self.head(), "count": len(self.entries())}
+
+    def check_witness(self, witness: dict) -> tuple[bool | None, str]:
+        """Does this log still agree with a backup's account of it?
+
+        Returns (verdict, sentence). None means the question does not apply
+        — an empty or absent witness testifies to nothing, which is not the
+        same as testifying that nothing is wrong.
+        """
+        head = (witness or {}).get("head") or ""
+        count = (witness or {}).get("count") or 0
+        if not head or head == GENESIS or not count:
+            return None, ("That backup was taken before any calls were "
+                          "recorded, so it has nothing to attest to.")
+
+        hashes = [e.get("hash") for e in self.entries()]
+        if head not in hashes:
+            return False, (
+                f"The entry this backup witnessed is no longer in the "
+                f"record. It saw {count} calls, ending with "
+                f"{head[:12]}…, and that entry is gone.")
+
+        at = hashes.index(head) + 1
+        if at != count:
+            return False, (
+                f"This backup saw that entry as number {count}; it is now "
+                f"number {at}. {count - at} earlier entries have been "
+                f"removed." if at < count else
+                f"This backup saw that entry as number {count}; it is now "
+                f"number {at}. Entries have been inserted before it.")
+
+        return True, (
+            f"The record still agrees with this backup: the {count} calls it "
+            f"witnessed are all present and in the same order. Anything "
+            f"recorded after the backup is outside what it can vouch for.")
+
     def summary(self) -> str:
         intact, problems = self.verify()
         n = len(self.entries())

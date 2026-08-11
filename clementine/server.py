@@ -62,7 +62,7 @@ def _unusable(bundle: dict) -> str:
     prevented is not a bad import — it is a bad import that reports success
     while the companion it replaced is gone from everywhere the person looks.
     """
-    for key in ("config", "memory"):
+    for key in ("config", "memory", "audit"):
         value = bundle.get(key)
         if value is not None and not isinstance(value, dict):
             return (f"the '{key}' section is {type(value).__name__}, not an "
@@ -356,6 +356,14 @@ def create_app(companion: Clementine) -> Flask:
             "config": asdict(c.personality),
             "memory": asdict(c.memory),
         }
+        # What the record looked like when this was taken, so the file can
+        # later be asked whether the record still agrees with it. Not the log
+        # itself — the entries stay on the machine that made them, and this
+        # is a fingerprint, not a copy. It is what lets a backup notice
+        # entries removed from the end of a chain, which the chain cannot
+        # notice about itself.
+        if c.audit:
+            bundle["audit"] = c.audit.witness()
         resp = Response(json.dumps(bundle, indent=2),
                         mimetype="application/json")
         stamp = datetime.now().strftime("%Y-%m-%d")
