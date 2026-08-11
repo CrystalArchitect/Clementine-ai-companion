@@ -19,22 +19,32 @@ Entries are removed when the thing is built, not when it is planned.
 
 ## 1. The interface a person opens reaches almost none of the companion
 
-**Status: partly closed. Opened at 4 of 14 on 10 August 2026; re-measured
-against `master` on 11 August 2026 at 7 of 14.**
+**Status: largely closed. Opened at 4 of 14 on 10 August 2026; 9 of 14 as
+of 11 August 2026.**
+
+> The ratio is no longer counted by hand. `tests/test_reachability.py`
+> measures it and fails when the set changes in either direction, because
+> counting it by hand got it wrong twice — once low, once high. The second
+> time was a substring search: `/api/profile` is a substring of
+> `/api/profile/meta`, so wiring up the identity panel silently marked
+> listing and switching companions as reached too. Update that test and this
+> entry in the same commit.
 
 The server declares **17 routes**. Setting aside the three that describe the
 service rather than provide it (`/api`, `/api/openapi.json`, and the static
-asset handler), **14 are functional. The webapp now calls 7.**
+asset handler), **14 are functional. The webapp now calls 9.**
 
 | Reachable from the interface | Reachable only over HTTP |
 |---|---|
 | `POST /api/chat/stream` | `POST /api/teach` |
 | `GET /api/status` | `POST /api/reflect` |
-| `GET /api/health` | `POST /api/import` |
-| `GET /api/audit` — the whole record | `GET /api/profile` |
-| `GET /api/memories` | `POST /api/profile` |
-| `POST /api/forget` | `POST /api/profile/meta` |
-| `GET /api/export` | `POST /api/profile/delete` |
+| `GET /api/health` | `GET /api/profile` |
+| `GET /api/audit` — the whole record | `POST /api/profile` |
+| `GET /api/memories` | `POST /api/profile/delete` |
+| `POST /api/forget` | |
+| `GET /api/export` | |
+| `POST /api/import` | |
+| `POST /api/profile/meta` | |
 
 The original entry, kept below unedited, argued that what was unreachable was
 "most of what the word *sovereign* is doing in this project". That is no
@@ -47,13 +57,18 @@ rather than let a shrinking number imply the rest is merely more of the same:
 
 - `teach` and `reflect` are conveniences. Both are already reachable by
   talking to the companion, which is what the window is for.
-- `import` is the one destructive operation left. It replaces a whole profile
-  — memory and identity together — with no undo. It was deliberately left
-  until after `export`, so that a person can take a backup before the button
-  that overwrites everything exists to be clicked. It should not be built
-  without the same care the delete confirmation got, and probably more.
-- The four `profile` routes are genuine gaps, but they are about running
-  several companions rather than about the sovereignty of one.
+- The three remaining `profile` routes — listing companions, switching
+  between them, deleting one — are genuine gaps, but they are about running
+  *several* companions rather than about the sovereignty of one. Deleting a
+  profile destroys a whole companion, so it should not be built with less
+  care than restoring one got.
+
+`import` was the last destructive operation and is now built, on an endpoint
+hardened first: it had answered `{"ok": true}` while replacing a companion
+with an empty one, and now refuses a damaged file before writing and copies
+what it replaces aside. The identity surface (`profile/meta`) is built too,
+which is what finally made the pronoun law reachable by both parties over the
+web rather than only in a terminal.
 
 Two follow-ups recorded elsewhere in conversation belong here too, because
 both are format-level and neither is a UI question:
@@ -78,13 +93,15 @@ unbuilt work that rewrites its own history each time something ships stops
 being evidence of anything — the value is in seeing what was true before, and
 what it took to change it.
 
-Of the five items below: **three are now built** (seeing what is held,
-deleting one memory, reading the consent record), **one is half built** —
-export exists, import does not — and **one is not built at all**. That last
-is the pronoun item, and it is worth being exact about, because it is the
-easiest to mistake for finished: `/api/profile/meta` serves both the human
-and the companion, and no interface calls it, so over the web the law is
-still only half-reachable. The API gained the capability; the window did not.
+**All five items below are now built**, as of 11 August 2026: seeing what
+is held, deleting one memory, reading the consent record, leaving with
+everything and coming back, and — last, because it was the easiest to mistake
+for finished — pronouns chosen by either party, over the web as well as in a
+terminal.
+
+Building that last one showed the same law half-kept for the *name*:
+`choose_name` let the companion name itself over HTTP while nothing let the
+human do it, and the attempt answered `{"ok": true}`. That is fixed with it.
 
 #### Why this is not a missing settings panel
 
