@@ -54,7 +54,7 @@ All documents live in [`content/`](content/) and are rendered in-app by the ligh
 - [content/CODEX.md](content/CODEX.md) — The Codex of TerAustralis Incognita
 - [content/APOCRYPHON.md](content/APOCRYPHON.md) — The Apocryphon of Crystal
 - [content/SPONSORS.md](content/SPONSORS.md) — GitHub Sponsors tier descriptions
-- [src/](src/) — The SvelteKit frontend for teraustralis.com.au (run with `npm install && npm run dev`)
+- [src/](src/) — A local SvelteKit frontend for reading this repository's content (run with `npm install && npm run dev`). **It does not serve teraustralis.com.au.** The live site is published from [TerAustralis-Incognita-Code](https://github.com/CrystalArchitect/TerAustralis-Incognita-Code) (`vision/site/`, GitHub Pages, on push to `main`); the `CNAME` moved there on 2026-07-28 and this repo has had no deploy path since. Changes here reach nobody — make site changes in that repository.
 - [clementine/](clementine/) — The sovereign companion: CrystalCore framework, terminal interface, local API server, and local Svelte web interface
 
 ## Licensing
