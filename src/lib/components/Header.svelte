@@ -6,7 +6,6 @@
     <a href="/apocryphon">Apocryphon</a>
     <a href="/clementine">Clementine</a>
     <a href="/docs">Archive</a>
-    <a href="/ledger">Ledger</a>
     <a href="/#support">Support</a>
   </nav>
 </header>
