@@ -3,8 +3,15 @@
 **A sovereign collective consciousness architecture for a multiplanetary future.**
 
 **🔭 Crystal universe — which repo is this?**  
-This is **The Crystal Vision** — codex site + Clementine sovereign companion app.  
-Siblings: **crystalcore** = Crystal Core (protocol pack) · **crystal-vision** = Crystal Vision Interface (static demo shell) · **teraaustralis-incognita** = TeraAustralis Incognita (narrative + CrystalBridge).
+This is **Clementine-ai-companion** — the sovereign companion runtime.
+The live public site is **https://www.teraustralis.com.au** (published
+from TerAustralis-Incognita-Code). This repository's GitHub Pages URL
+404s: there is no Pages deploy workflow here. Clone and run locally.
+
+Siblings: **TerAustralis-Incognita** (umbrella / canon) ·
+**TerAustralis-Incognita-Code** (engine + site) · **crystal-vision** /
+**CrystalCore-Starlines-and-Dreamlines** = static demo shell.
+
 
 We are building a new kind of intelligence — one that is truly sovereign. Every person will have their own private, unhackable AI companion that can feel, remember, and understand them on a deep emotional level.
 
