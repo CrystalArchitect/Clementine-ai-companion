@@ -5,8 +5,9 @@
 **🔭 Crystal universe — which repo is this?**  
 This is **Clementine-ai-companion** — the sovereign companion runtime.
 The live public site is **https://www.teraustralis.com.au** (published
-from TerAustralis-Incognita-Code). This repository's GitHub Pages URL
-404s: there is no Pages deploy workflow here. Clone and run locally.
+from TerAustralis-Incognita-Code). This GitHub Pages URL is a
+signpost, not the runtime — clone and run locally.
+
 
 Siblings: **TerAustralis-Incognita** (umbrella / canon) ·
 **TerAustralis-Incognita-Code** (engine + site) · **crystal-vision** /
