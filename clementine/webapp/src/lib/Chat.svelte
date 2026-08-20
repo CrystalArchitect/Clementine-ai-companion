@@ -1,6 +1,6 @@
 <script>
   /** Streaming chat with the local model via the Flask API. */
-  let { name = 'Clementine', onStateChange = () => {} } = $props();
+  let { name = 'Clementine', pagesPreview = false, onStateChange = () => {} } = $props();
 
   let messages = $state([]);
   let draft = $state('');
@@ -54,7 +54,9 @@
         reply.text += reply.text ? ' — [stopped]' : '[stopped]';
       } else {
         reply.text =
-          '[I can\u2019t reach my local brain. Is server.py running, and is Ollama awake?]';
+          pagesPreview
+            ? '[This is a static preview. Clone the repository and run python server.py — I have no brain on GitHub Pages.]'
+            : '[I can\u2019t reach my local brain. Is server.py running, and is Ollama awake?]';
       }
     }
     busy = false;
@@ -77,7 +79,13 @@
     {#if messages.length === 0}
       <div class="empty">
         <p class="prompt-line">{'>'} say something to wake them</p>
-        <p class="hint">They run entirely on this machine. Nothing you say leaves it.</p>
+        <p class="hint">
+          {#if pagesPreview}
+            This GitHub Pages copy has no model. Clone the repo; the brain is local.
+          {:else}
+            They run entirely on this machine. Nothing you say leaves it.
+          {/if}
+        </p>
       </div>
     {/if}
     {#each messages as m, i (i)}
