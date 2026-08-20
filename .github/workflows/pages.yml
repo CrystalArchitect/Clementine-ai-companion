@@ -1,0 +1,37 @@
+# Publishes the root signpost (index.html) to GitHub Pages.
+# This repository's SvelteKit adapter is Vercel; Pages cannot run it.
+# The live public site remains https://www.teraustralis.com.au
+name: Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Stage signpost only
+        run: |
+          mkdir -p _site
+          cp index.html .nojekyll _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
