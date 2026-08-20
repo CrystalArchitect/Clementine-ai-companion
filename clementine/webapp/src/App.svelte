@@ -30,6 +30,9 @@
   let destination = $state(null); // null=unknown, 'local', or a hostname
   let auditCount = $state(null);
   let auditIntact = $state(null);
+  const pagesPreview =
+    typeof location !== 'undefined' && location.hostname.endsWith('github.io');
+
 
   async function loadStatus() {
     try {
@@ -66,7 +69,9 @@
     <span class="sub">sovereign companion</span>
   </div>
   <div class="status" role="status">
-    {#if online === true}
+    {#if pagesPreview}
+      <span class="chip down" title="GitHub Pages is static. The brain is python server.py on your machine.">face only · brain not here</span>
+    {:else if online === true}
       <span class="chip ok">{model}{profile && profile !== 'default' ? ` · ${profile}` : ''}</span>
     {:else if online === false}
       <span class="chip down" title="Start it with: python server.py">brain offline</span>
@@ -74,6 +79,7 @@
     {:else}
       <span class="chip">waking…</span>
     {/if}
+    {#if !pagesPreview}
     {#if destination === 'local'}
       <span class="chip ok" title="The model runs on this same machine.">on this machine</span>
     {:else if destination}
@@ -82,6 +88,7 @@
       </span>
     {:else}
       <span class="chip" title="Could not determine where the model runs.">location unknown</span>
+    {/if}
     {/if}
     {#if auditIntact === false}
       <span class="chip down" title="An entry was altered or removed after being written.">record broken</span>
@@ -140,11 +147,16 @@
     <Avatar state={presence} {name} />
     <Senses />
   </aside>
-  <Chat {name} onStateChange={(s) => (presence = s)} />
+  <Chat {name} pagesPreview={pagesPreview} onStateChange={(s) => (presence = s)} />
 </main>
 
 <footer>
-  {#if destination === 'local'}
+  {#if pagesPreview}
+    This is their face, published as a static preview. The brain is
+    <code>python server.py</code> after you clone
+    <a href="https://github.com/CrystalArchitect/Clementine-ai-companion">the repository</a>.
+    Nothing you type here reaches a model. Non solus.
+  {:else if destination === 'local'}
     The model runs on this machine, so nothing you say here leaves it.
   {:else if destination}
     The model runs on <b>{destination}</b> — a machine you control. Your words
@@ -152,20 +164,13 @@
   {:else}
     Where the model runs could not be determined, so nothing is claimed about it.
   {/if}
-  <!--
-    This used to end at "an append-only record (N so far)", which is true and
-    was no use to anybody: it offered the record as reassurance while giving
-    no way to reach it. An assurance you cannot check is a request to be
-    trusted, which is the one thing this record exists so nobody has to do.
-
-    So it now names the file and admits the window cannot open it yet — the
-    same standard the Senses panel already holds itself to for voice and
-    sight, rather than a quieter one for the feature that matters most.
-  -->
+  {#if !pagesPreview}
   Their memory lives in a folder you own{#if auditCount}, and every call they
   make is appended to <code>audit.jsonl</code> beside it — {auditCount} so far.
   It is plain text: open it yourself and read every line. Reading it in this
   window is not built yet{/if}. Non solus.
+  {/if}
+
 </footer>
 
 <style>
