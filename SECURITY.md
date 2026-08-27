@@ -16,8 +16,10 @@ until a fix has shipped.
 
 - **Clementine is local-first** (`clementine/`): the companion runs on the
   user's own device via Ollama by default; memory and profiles stay on disk.
-- **Cloud is opt-in only**: the xAI provider requires an explicit `/optin` and can
-  be revoked with `/optout`; opt-in state is recorded locally.
+- **Cloud is opt-in only**: a non-local model is refused by `ConsentGate`
+  unless the `CLEM_REMOTE_OK=1` environment variable pre-authorises it; there
+  is no `/optin`/`/optout` command pair — consent is an environment-level,
+  fail-closed gate, not a runtime toggle.
 - **No telemetry** — the app phones home to no one.
 - **No secrets committed** — `.gitignore` blocks `.env`, keys, and credentials;
   `XAI_API_KEY` is read from the environment only.

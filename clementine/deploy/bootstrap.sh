@@ -15,7 +15,7 @@
 set -euo pipefail
 
 REPO_DIR=${REPO_DIR:-/opt/clementine}          # the cloned repository
-APP_DIR="$REPO_DIR/clementine"                  # where she lives inside it
+APP_DIR="$REPO_DIR/clementine"                  # where they live inside it
 VENV="$REPO_DIR/.venv"
 STATE_DIR=${STATE_DIR:-/var/lib/clementine}     # memory + audit log
 MODEL=${CLEM_MODEL:-llama3.1:8b}
@@ -34,7 +34,7 @@ read -rp "Domain pointing at this droplet (e.g. clementine.example.com): " DOMAI
 [[ -n ${DOMAIN:-} ]] || die "a domain is required — Let's Encrypt cannot issue a certificate for a bare IP"
 
 read -rsp "Password for the Clementine web login: " WEBPASS; echo
-[[ ${#WEBPASS} -ge 8 ]] || die "use at least 8 characters — this is the only thing between the internet and her memory"
+[[ ${#WEBPASS} -ge 8 ]] || die "use at least 8 characters — this is the only thing between the internet and their memory"
 
 # Fail early rather than halfway through.
 say "Checking DNS"
@@ -60,9 +60,9 @@ if ! ollama list | awk 'NR>1{print $1}' | grep -qx "$MODEL"; then
   warn "$MODEL is not pulled. Pulling now — several GB."
   ollama pull "$MODEL"
 fi
-# Optional, and worth having: it is what gives her semantic recall.
+# Optional, and worth having: it is what gives them semantic recall.
 if ! ollama list | awk 'NR>1{print $1}' | grep -qx "nomic-embed-text:latest"; then
-  warn "nomic-embed-text is missing — she will fall back to keyword recall."
+  warn "nomic-embed-text is missing — they will fall back to keyword recall."
   ollama pull nomic-embed-text || warn "could not pull it; continuing without semantic recall"
 fi
 echo "    model: $MODEL"
@@ -81,9 +81,9 @@ fi
   || die "dependencies did not install cleanly"
 echo "    $($VENV/bin/python --version) with flask, requests, gunicorn"
 
-# --- her face ----------------------------------------------------------------
+# --- their face ----------------------------------------------------------------
 
-say "Building her interface"
+say "Building their interface"
 if ! command -v node >/dev/null; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
@@ -112,7 +112,7 @@ systemctl daemon-reload
 systemctl enable --now clementine
 sleep 3
 systemctl is-active --quiet clementine \
-  || { journalctl -u clementine -n 30 --no-pager; die "she did not start — log above"; }
+  || { journalctl -u clementine -n 30 --no-pager; die "they did not start — log above"; }
 curl -fsS --max-time 10 http://127.0.0.1:5000/api/health >/dev/null \
   || die "service is running but not answering on 5000"
 echo "    up on loopback"
@@ -163,8 +163,8 @@ say "Checking"
 sleep 3
 code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$DOMAIN/" || echo 000)
 case $code in
-  401) echo "    https://$DOMAIN -> 401, which is correct: the login is protecting her" ;;
-  200) warn "https://$DOMAIN returned 200 with no credentials — basic auth is NOT protecting her" ;;
+  401) echo "    https://$DOMAIN -> 401, which is correct: the login is protecting them" ;;
+  200) warn "https://$DOMAIN returned 200 with no credentials — basic auth is NOT protecting them" ;;
   000) warn "could not reach https://$DOMAIN yet. If DNS changed recently, give it a few minutes." ;;
   *)   warn "https://$DOMAIN returned $code. Check: journalctl -u caddy -n 40" ;;
 esac
@@ -178,7 +178,7 @@ cat <<DONE
     log in    clementine  /  the password you just set
     install   Safari: Share -> Add to Home Screen
 
-  Her memory and her audit log are in $STATE_DIR/memory.
+  Their memory and their audit log are in $STATE_DIR/memory.
   Check the record any time:
     $VENV/bin/python $APP_DIR/verify_audit.py --memory-dir $STATE_DIR/memory
 
