@@ -1,7 +1,7 @@
 {
   "name": "Clementine",
   "short_name": "Clementine",
-  "description": "A sovereign companion. She runs on hardware you own.",
+  "description": "A sovereign companion. Runs on hardware you own.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

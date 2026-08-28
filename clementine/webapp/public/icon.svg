@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Clementine">
-  <!-- Her mark, in the interface's own palette: near-black ground and violet
+  <!-- Their mark, in the interface's own palette: near-black ground and violet
        accent, taken from --bg #000004 and --purple #a78bfa in src/app.css. -->
   <defs>
     <radialGradient id="fruit" cx="38%" cy="32%" r="78%">

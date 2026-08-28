@@ -1,18 +1,18 @@
-// Clementine's service worker — it caches her face, never her words.
+// Clementine's service worker — it caches their face, never their words.
 //
 // BEFORE YOU ADD CACHING FOR /api/: don't. This is the one rule in this file
 // and it is not a performance oversight.
 //
-// She has memory, and memory is the thing she must not fake. A cached reply
-// would put words in her mouth that no model produced in this conversation.
+// They have memory, and memory is the thing they must not fake. A cached reply
+// would put words in their mouth that no model produced in this conversation.
 // A cached /api/audit would show a record that is out of date — worse than
 // showing none, because the record exists precisely so it can be trusted.
 // A cached /api/health would report a model as reachable after it had gone,
 // defeating the point of asking.
 //
-// The interface itself is inert and safe to cache, which is what makes her
+// The interface itself is inert and safe to cache, which is what makes them
 // open instantly on a bad connection. Everything behind /api/ goes to the
-// network every single time, and when the network is gone she says so.
+// network every single time, and when the network is gone they say so.
 
 const VERSION = 'clementine-v1';
 
@@ -77,8 +77,8 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        // A navigation with no network falls back to her shell, which will
-        // then report honestly that it cannot reach her.
+        // A navigation with no network falls back to their shell, which will
+        // then report honestly that it cannot reach them.
         .catch(() => caches.match('/index.html'));
     })
   );
