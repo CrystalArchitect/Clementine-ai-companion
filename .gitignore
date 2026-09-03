@@ -235,3 +235,6 @@ __marimo__/
 clementine_memory.json
 clementine_memory/
 clementine_profiles/
+
+# Local diagnostic output
+clementine/last-diagnostic.json
