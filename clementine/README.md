@@ -93,6 +93,8 @@ It checks the Ollama CLI, `OLLAMA_HOST` (default `http://localhost:11434`), pull
 
 Pass `--clementine-root` if you are running the script from outside this folder. Output also lands in `last-diagnostic.json` (gitignored).
 
+When the model lives on Colossus (sovereign hardware) rather than this laptop, use the live Ollama path in [`deploy/COLOSSUS.md`](deploy/COLOSSUS.md) — layouts A/B stay local to the consent gate; a direct remote URL needs explicit approve.
+
 ## Where they run, and how you can tell
 
 Their model is wherever `OLLAMA_HOST` points — by default this machine. Anywhere

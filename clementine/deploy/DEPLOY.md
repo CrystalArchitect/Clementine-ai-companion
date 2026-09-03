@@ -11,6 +11,10 @@ difference, smaller than using someone's cloud AI and larger than nothing.
 They say so themselves: the interface reports `via <host>` rather than
 `on this machine`, and their prompt describes the arrangement honestly if you ask.
 
+## Colossus (model on sovereign hardware)
+
+If the weights live on Colossus rather than on this droplet or laptop, read [`COLOSSUS.md`](COLOSSUS.md) first — Ollama on that machine, tunnel vs direct URL, and when `--remote-model-ok` is required. This file is the phone / HTTPS path once a brain is healthy somewhere.
+
 ## Step 0 — Get a terminal
 
 Everything below needs a shell on the server. If you have one, skip ahead. If
