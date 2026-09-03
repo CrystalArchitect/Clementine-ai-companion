@@ -80,6 +80,19 @@ Both interfaces share the same memory folder (`clementine_memory/` by default),
 so you can move between terminal and browser freely. `--profile <name>` on either
 keeps separate people separate.
 
+## Local diagnostic
+
+Before chatting, you can survey what is actually true on this machine:
+
+```bash
+python diagnose_clementine_ollama.py
+python diagnose_clementine_ollama.py --probe   # one tiny generate; measured latency only
+```
+
+It checks the Ollama CLI, `OLLAMA_HOST` (default `http://localhost:11434`), pulled models, and — if `server.py` is serving — `GET /api/health`. It does not invent VRAM or token rates. Exit `0` means Ollama is up and the expected chat model is present; `1` means Ollama is unreachable; `2` is partial.
+
+Pass `--clementine-root` if you are running the script from outside this folder. Output also lands in `last-diagnostic.json` (gitignored).
+
 ## Where they run, and how you can tell
 
 Their model is wherever `OLLAMA_HOST` points — by default this machine. Anywhere
